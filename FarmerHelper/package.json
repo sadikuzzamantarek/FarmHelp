@@ -12,7 +12,10 @@
     "lint": "expo lint",
     "preview-match": "node ./scripts/preview-match.js",
     "build-preview": "node ./scripts/build-preview.js",
-    "seed-supabase": "node ./scripts/seed-supabase.js"
+    "seed-supabase": "node ./scripts/seed-supabase.js",
+    "build-roads": "node ./scripts/build-roads.js",
+    "upload-roads": "node ./scripts/upload-roads.js",
+    "check-roads": "node ./scripts/check-roads.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -51,6 +54,7 @@
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "osm-pbf-parser": "^2.3.0",
     "typescript": "~5.9.2"
   },
   "private": true

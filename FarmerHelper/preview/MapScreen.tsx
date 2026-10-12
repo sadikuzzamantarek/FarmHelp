@@ -21,6 +21,7 @@ import {
   loadGeoContext,
   runGeoMatch,
 } from "../services/geoClient";
+import { fetchRoadPath } from "../services/supabase";
 
 const OSM_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 const SERVICE_TYPES = ["tractor", "sprayer", "seed"];
@@ -42,6 +43,7 @@ export default function MapScreen() {
   const [status, setStatus] = useState("Connecting to backend...");
   const [expanded, setExpanded] = useState(true);
   const [showCandidates, setShowCandidates] = useState(false);
+  const [roadLine, setRoadLine] = useState<[number, number][] | null>(null);
 
   // Farmer request options
   const [serviceType, setServiceType] = useState("tractor");
@@ -83,8 +85,23 @@ export default function MapScreen() {
       travel_cost_per_km_tk: Number(travelCostPerKm) || 0,
     };
     try {
-      setResult(await runGeoMatch(req, providers));
+      const r = await runGeoMatch(req, providers);
+      setResult(r);
       setShowCandidates(true);
+      setRoadLine(null);
+      setStatus(
+        (r as any).distance_kind === "road"
+          ? "✓ real road distance (pgRouting)"
+          : (r as any).distance_kind === "haversine"
+            ? "✓ Haversine distance"
+            : "✓ json-server",
+      );
+      if ((r as any).distance_kind === "road" && r.success && providers[r.best_provider]) {
+        const target = providers[r.best_provider];
+        fetchRoadPath(center, { lat: target.lat, lng: target.lng })
+          .then((gj: any) => setRoadLine(gj ? gj.coordinates : null))
+          .catch(() => setRoadLine(null));
+      }
     } catch (error: any) {
       setStatus("Match failed: " + error.message);
     }
@@ -92,6 +109,7 @@ export default function MapScreen() {
 
   const isSeed = serviceType === "seed";
   const best = result?.success ? providers[result.best_provider] : null;
+  const hasRoadPath = !!(roadLine && roadLine.length > 1);
   const route: GeoJSON.Feature | null =
     best && center
       ? {
@@ -99,10 +117,13 @@ export default function MapScreen() {
           properties: {},
           geometry: {
             type: "LineString",
-            coordinates: [
-              [center.lng, center.lat],
-              [best.lng, best.lat],
-            ],
+            coordinates:
+              hasRoadPath && best
+                ? roadLine
+                : [
+                    [center.lng, center.lat],
+                    [best.lng, best.lat],
+                  ],
           },
         }
       : null;
@@ -129,15 +150,40 @@ export default function MapScreen() {
 
         {route && (
           <GeoJSONSource id="route" data={route}>
-            <Layer
-              id="route-layer"
-              type="line"
-              style={{
-                lineColor: "#1565c0",
-                lineWidth: 4,
-                lineDasharray: [4, 2],
-              }}
-            />
+            {hasRoadPath ? (
+              <>
+                <Layer
+                  id="route-casing"
+                  type="line"
+                  style={{
+                    lineColor: "#1b1b1b",
+                    lineWidth: 8,
+                    lineCap: "round",
+                    lineJoin: "round",
+                  }}
+                />
+                <Layer
+                  id="route-line"
+                  type="line"
+                  style={{
+                    lineColor: "#ff9800",
+                    lineWidth: 4,
+                    lineCap: "round",
+                    lineJoin: "round",
+                  }}
+                />
+              </>
+            ) : (
+              <Layer
+                id="route-dashed"
+                type="line"
+                style={{
+                  lineColor: "#1565c0",
+                  lineWidth: 4,
+                  lineDasharray: [4, 2],
+                }}
+              />
+            )}
           </GeoJSONSource>
         )}
       </Map>

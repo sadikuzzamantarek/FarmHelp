@@ -43,3 +43,9 @@ app-example
 /android
 .claude
 .env
+
+# generated road-graph data / downloads
+scripts/.cache/
+supabase/road-data.sql
+supabase/road-data.json
+preview/roads.geojson
