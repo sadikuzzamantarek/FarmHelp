@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FarmMatch Preview — Real Coordinates</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+  #map { position: absolute; inset: 0; }
+  .panel {
+    position: absolute; top: 12px; left: 12px; z-index: 1000;
+    width: 300px; max-height: calc(100% - 24px); overflow: auto;
+    background: rgba(255,255,255,0.96); border-radius: 10px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25); padding: 14px;
+  }
+  .panel h1 { font-size: 16px; margin: 0 0 2px; }
+  .panel .sub { font-size: 12px; color: #666; margin-bottom: 10px; }
+  label { display: block; font-size: 12px; font-weight: 600; margin: 8px 0 2px; }
+  input, select { width: 100%; box-sizing: border-box; padding: 6px; font-size: 14px;
+    border: 1px solid #ccc; border-radius: 6px; }
+  .row { display: flex; gap: 8px; }
+  .row > div { flex: 1; }
+  button { width: 100%; margin-top: 12px; padding: 9px; font-size: 15px; font-weight: 600;
+    color: #fff; background: #2e7d32; border: 0; border-radius: 6px; cursor: pointer; }
+  button.secondary { background: #607d8b; margin-top: 6px; }
+  .hint { font-size: 12px; color: #2a7; margin-top: 6px; }
+  .best { background: #e8f5e9; border-radius: 6px; padding: 8px; margin-top: 10px; }
+  .best b { color: #2e7d32; }
+  ol { padding-left: 18px; margin: 8px 0 0; }
+  ol li { font-size: 12px; margin-bottom: 3px; }
+  .legend { position: absolute; bottom: 12px; right: 12px; z-index: 1000;
+    background: rgba(255,255,255,0.96); border-radius: 8px; padding: 8px 10px;
+    font-size: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div class="panel">
+  <h1>🚜 FarmMatch Preview</h1>
+  <div class="sub" id="region"></div>
+
+  <label>Click the map to set the farmer's field</label>
+  <div class="row">
+    <div><label>Latitude</label><input id="lat" type="number" step="0.0001" /></div>
+    <div><label>Longitude</label><input id="lng" type="number" step="0.0001" /></div>
+  </div>
+
+  <label>Service type</label>
+  <select id="service">
+    <option value="tractor">Tractor</option>
+    <option value="sprayer">Sprayer</option>
+    <option value="seed">Seed</option>
+  </select>
+
+  <div class="row">
+    <div id="acresWrap"><label>Acres</label><input id="acres" type="number" value="5" /></div>
+    <div id="kgWrap" style="display:none"><label>Kg needed</label><input id="kg" type="number" value="20" /></div>
+  </div>
+
+  <div class="row">
+    <div><label>Max distance (km)</label><input id="maxDist" type="number" value="12" /></div>
+    <div><label>Max cost (Tk)</label><input id="maxCost" type="number" value="2000" /></div>
+  </div>
+
+  <label>Travel cost per km (Tk)</label>
+  <input id="rate" type="number" value="10" />
+
+  <button id="find">Find best provider</button>
+  <button id="reset" class="secondary">Reset to center</button>
+
+  <div id="result"></div>
+</div>
+
+<div class="legend">
+  <div><span class="dot" style="background:#2e7d32"></span>Offers service (available)</div>
+  <div><span class="dot" style="background:#fb8c00"></span>Offers but unavailable</div>
+  <div><span class="dot" style="background:#9e9e9e"></span>Does not offer service</div>
+  <div><span class="dot" style="background:#1565c0"></span>Farmer</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const DATA = /*__DATA__*/;
+const PROVIDERS = DATA.providers;
+const META = DATA.meta;
+
+const EARTH_RADIUS_KM = 6371;
+const toRad = (d) => (d * Math.PI) / 180;
+function haversineKm(a, b) {
+  const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
+}
+
+const map = L.map("map").setView([META.center.lat, META.center.lng], 11);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+}).addTo(map);
+
+document.getElementById("region").textContent =
+  META.region + " • " + META.grid + " • " + META.step_km + " km/step";
+
+let farmer = { lat: META.center.lat, lng: META.center.lng };
+let farmerMarker = null;
+let line = null;
+let bestMarker = null;
+const providerMarkers = {};
+
+function service() { return document.getElementById("service").value; }
+
+function colorFor(p) {
+  const s = (p.services || {})[service()];
+  if (!s) return "#9e9e9e";
+  return s.available ? "#2e7d32" : "#fb8c00";
+}
+
+function popupHtml(p) {
+  const rows = Object.entries(p.services || {}).map(([k, v]) => {
+    const price = k === "seed" ? v.price_per_kg + " Tk/kg" : v.price_per_acre + " Tk/acre";
+    return `<div>${k}: ${price} ${v.available ? "" : "(unavailable)"}</div>`;
+  }).join("");
+  return `<b>${p.name}</b> (node ${p.node})<br/>${rows}`;
+}
+
+Object.entries(PROVIDERS).forEach(([id, p]) => {
+  const m = L.circleMarker([p.lat, p.lng], {
+    radius: 6, color: "#fff", weight: 1, fillColor: colorFor(p), fillOpacity: 0.95,
+  }).bindPopup(popupHtml(p)).addTo(map);
+  providerMarkers[id] = m;
+});
+
+function refreshColors() {
+  Object.values(PROVIDERS).forEach((p) => providerMarkers[p.name].setStyle({ fillColor: colorFor(p) }));
+}
+
+function setFarmer(lat, lng) {
+  farmer = { lat, lng };
+  document.getElementById("lat").value = lat.toFixed(6);
+  document.getElementById("lng").value = lng.toFixed(6);
+  if (farmerMarker) map.removeLayer(farmerMarker);
+  farmerMarker = L.marker([lat, lng], { title: "Farmer" }).addTo(map);
+  if (line) { map.removeLayer(line); line = null; }
+  if (bestMarker) { map.removeLayer(bestMarker); bestMarker = null; }
+}
+
+map.on("click", (e) => setFarmer(e.latlng.lat, e.latlng.lng));
+
+document.getElementById("service").addEventListener("change", () => {
+  const isSeed = service() === "seed";
+  document.getElementById("acresWrap").style.display = isSeed ? "none" : "block";
+  document.getElementById("kgWrap").style.display = isSeed ? "block" : "none";
+  refreshColors();
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+  map.setView([META.center.lat, META.center.lng], 11);
+  setFarmer(META.center.lat, META.center.lng);
+  document.getElementById("result").innerHTML = "";
+});
+
+document.getElementById("find").addEventListener("click", () => {
+  const reqType = service();
+  const acres = Number(document.getElementById("acres").value) || 0;
+  const kg = Number(document.getElementById("kg").value) || 0;
+  const maxDist = Number(document.getElementById("maxDist").value) || 0;
+  const maxCost = Number(document.getElementById("maxCost").value) || 0;
+  const rate = Number(document.getElementById("rate").value) || 0;
+
+  const ranked = [];
+  for (const p of Object.values(PROVIDERS)) {
+    const s = (p.services || {})[reqType];
+    if (!s || !s.available) continue;
+    const dist = haversineKm(farmer, { lat: p.lat, lng: p.lng });
+    if (dist > maxDist) continue;
+    const serviceCost = reqType === "seed" ? s.price_per_kg * kg : s.price_per_acre * acres;
+    const total = serviceCost + dist * rate;
+    if (total > maxCost) continue;
+    const score = 0.7 * (total / maxCost) + 0.3 * (dist / maxDist);
+    ranked.push([score, p, dist, total]);
+  }
+  ranked.sort((a, b) => a[0] - b[0]);
+
+  const box = document.getElementById("result");
+  if (ranked.length === 0) {
+    box.innerHTML = '<div class="best">❌ No eligible provider. Adjust criteria.</div>';
+    return;
+  }
+
+  const [ , best, bdist, bcost] = ranked[0];
+  box.innerHTML =
+    '<div class="best">✅ Best: <b>' + best.name + '</b><br/>' +
+    bdist.toFixed(2) + ' km • ' + bcost.toFixed(0) + ' Tk</div>' +
+    '<ol>' + ranked.slice(0, 8).map(([, p, d, c]) =>
+      '<li>' + p.name + ' — ' + d.toFixed(2) + ' km, ' + c.toFixed(0) + ' Tk</li>'
+    ).join("") + '</ol>';
+
+  if (line) map.removeLayer(line);
+  line = L.polyline([[farmer.lat, farmer.lng], [best.lat, best.lng]],
+    { color: "#1565c0", weight: 3, dashArray: "6 6" }).addTo(map);
+
+  if (bestMarker) map.removeLayer(bestMarker);
+  bestMarker = L.circleMarker([best.lat, best.lng],
+    { radius: 10, color: "#1565c0", weight: 3, fillColor: "#2e7d32", fillOpacity: 1 }).addTo(map);
+  bestMarker.bindPopup("<b>BEST: " + best.name + "</b>").openPopup();
+  map.fitBounds(line.getBounds(), { padding: [60, 60] });
+});
+
+setFarmer(META.center.lat, META.center.lng);
+</script>
+</body>
+</html>

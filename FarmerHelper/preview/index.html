@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FarmMatch Preview — Real Coordinates</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+  #map { position: absolute; inset: 0; }
+  .panel {
+    position: absolute; top: 12px; left: 12px; z-index: 1000;
+    width: 300px; max-height: calc(100% - 24px); overflow: auto;
+    background: rgba(255,255,255,0.96); border-radius: 10px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25); padding: 14px;
+  }
+  .panel h1 { font-size: 16px; margin: 0 0 2px; }
+  .panel .sub { font-size: 12px; color: #666; margin-bottom: 10px; }
+  label { display: block; font-size: 12px; font-weight: 600; margin: 8px 0 2px; }
+  input, select { width: 100%; box-sizing: border-box; padding: 6px; font-size: 14px;
+    border: 1px solid #ccc; border-radius: 6px; }
+  .row { display: flex; gap: 8px; }
+  .row > div { flex: 1; }
+  button { width: 100%; margin-top: 12px; padding: 9px; font-size: 15px; font-weight: 600;
+    color: #fff; background: #2e7d32; border: 0; border-radius: 6px; cursor: pointer; }
+  button.secondary { background: #607d8b; margin-top: 6px; }
+  .hint { font-size: 12px; color: #2a7; margin-top: 6px; }
+  .best { background: #e8f5e9; border-radius: 6px; padding: 8px; margin-top: 10px; }
+  .best b { color: #2e7d32; }
+  ol { padding-left: 18px; margin: 8px 0 0; }
+  ol li { font-size: 12px; margin-bottom: 3px; }
+  .legend { position: absolute; bottom: 12px; right: 12px; z-index: 1000;
+    background: rgba(255,255,255,0.96); border-radius: 8px; padding: 8px 10px;
+    font-size: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div class="panel">
+  <h1>🚜 FarmMatch Preview</h1>
+  <div class="sub" id="region"></div>
+
+  <label>Click the map to set the farmer's field</label>
+  <div class="row">
+    <div><label>Latitude</label><input id="lat" type="number" step="0.0001" /></div>
+    <div><label>Longitude</label><input id="lng" type="number" step="0.0001" /></div>
+  </div>
+
+  <label>Service type</label>
+  <select id="service">
+    <option value="tractor">Tractor</option>
+    <option value="sprayer">Sprayer</option>
+    <option value="seed">Seed</option>
+  </select>
+
+  <div class="row">
+    <div id="acresWrap"><label>Acres</label><input id="acres" type="number" value="5" /></div>
+    <div id="kgWrap" style="display:none"><label>Kg needed</label><input id="kg" type="number" value="20" /></div>
+  </div>
+
+  <div class="row">
+    <div><label>Max distance (km)</label><input id="maxDist" type="number" value="12" /></div>
+    <div><label>Max cost (Tk)</label><input id="maxCost" type="number" value="2000" /></div>
+  </div>
+
+  <label>Travel cost per km (Tk)</label>
+  <input id="rate" type="number" value="10" />
+
+  <button id="find">Find best provider</button>
+  <button id="reset" class="secondary">Reset to center</button>
+
+  <div id="result"></div>
+</div>
+
+<div class="legend">
+  <div><span class="dot" style="background:#2e7d32"></span>Offers service (available)</div>
+  <div><span class="dot" style="background:#fb8c00"></span>Offers but unavailable</div>
+  <div><span class="dot" style="background:#9e9e9e"></span>Does not offer service</div>
+  <div><span class="dot" style="background:#1565c0"></span>Farmer</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const DATA = {"meta":{"region":"Rangpur, Bangladesh","grid":"10x10 (R0C0..R9C9)","step_km":2,"rows_axis":"north","cols_axis":"east","center":{"lat":25.7439,"lng":89.2752},"origin_R0C0":{"lat":25.663052,"lng":89.185443},"corner_R9C9":{"lat":25.824748,"lng":89.365079},"span_km":18},"nodes":{"R0C0":{"lat":25.663052,"lng":89.185443},"R0C1":{"lat":25.663052,"lng":89.205376},"R0C2":{"lat":25.663052,"lng":89.225308},"R0C3":{"lat":25.663052,"lng":89.24524},"R0C4":{"lat":25.663052,"lng":89.265173},"R0C5":{"lat":25.663052,"lng":89.285105},"R0C6":{"lat":25.663052,"lng":89.305038},"R0C7":{"lat":25.663052,"lng":89.32497},"R0C8":{"lat":25.663052,"lng":89.344903},"R0C9":{"lat":25.663052,"lng":89.364835},"R1C0":{"lat":25.681018,"lng":89.185443},"R1C1":{"lat":25.681018,"lng":89.205379},"R1C2":{"lat":25.681018,"lng":89.225314},"R1C3":{"lat":25.681018,"lng":89.245249},"R1C4":{"lat":25.681018,"lng":89.265185},"R1C5":{"lat":25.681018,"lng":89.28512},"R1C6":{"lat":25.681018,"lng":89.305056},"R1C7":{"lat":25.681018,"lng":89.324991},"R1C8":{"lat":25.681018,"lng":89.344927},"R1C9":{"lat":25.681018,"lng":89.364862},"R2C0":{"lat":25.698984,"lng":89.185443},"R2C1":{"lat":25.698984,"lng":89.205382},"R2C2":{"lat":25.698984,"lng":89.22532},"R2C3":{"lat":25.698984,"lng":89.245258},"R2C4":{"lat":25.698984,"lng":89.265197},"R2C5":{"lat":25.698984,"lng":89.285135},"R2C6":{"lat":25.698984,"lng":89.305074},"R2C7":{"lat":25.698984,"lng":89.325012},"R2C8":{"lat":25.698984,"lng":89.344951},"R2C9":{"lat":25.698984,"lng":89.364889},"R3C0":{"lat":25.716951,"lng":89.185443},"R3C1":{"lat":25.716951,"lng":89.205385},"R3C2":{"lat":25.716951,"lng":89.225326},"R3C3":{"lat":25.716951,"lng":89.245267},"R3C4":{"lat":25.716951,"lng":89.265209},"R3C5":{"lat":25.716951,"lng":89.28515},"R3C6":{"lat":25.716951,"lng":89.305092},"R3C7":{"lat":25.716951,"lng":89.325033},"R3C8":{"lat":25.716951,"lng":89.344975},"R3C9":{"lat":25.716951,"lng":89.364916},"R4C0":{"lat":25.734917,"lng":89.185443},"R4C1":{"lat":25.734917,"lng":89.205388},"R4C2":{"lat":25.734917,"lng":89.225332},"R4C3":{"lat":25.734917,"lng":89.245277},"R4C4":{"lat":25.734917,"lng":89.265221},"R4C5":{"lat":25.734917,"lng":89.285165},"R4C6":{"lat":25.734917,"lng":89.30511},"R4C7":{"lat":25.734917,"lng":89.325054},"R4C8":{"lat":25.734917,"lng":89.344999},"R4C9":{"lat":25.734917,"lng":89.364943},"R5C0":{"lat":25.752883,"lng":89.185443},"R5C1":{"lat":25.752883,"lng":89.205391},"R5C2":{"lat":25.752883,"lng":89.225338},"R5C3":{"lat":25.752883,"lng":89.245286},"R5C4":{"lat":25.752883,"lng":89.265233},"R5C5":{"lat":25.752883,"lng":89.285181},"R5C6":{"lat":25.752883,"lng":89.305128},"R5C7":{"lat":25.752883,"lng":89.325075},"R5C8":{"lat":25.752883,"lng":89.345023},"R5C9":{"lat":25.752883,"lng":89.36497},"R6C0":{"lat":25.770849,"lng":89.185443},"R6C1":{"lat":25.770849,"lng":89.205394},"R6C2":{"lat":25.770849,"lng":89.225344},"R6C3":{"lat":25.770849,"lng":89.245295},"R6C4":{"lat":25.770849,"lng":89.265245},"R6C5":{"lat":25.770849,"lng":89.285196},"R6C6":{"lat":25.770849,"lng":89.305146},"R6C7":{"lat":25.770849,"lng":89.325097},"R6C8":{"lat":25.770849,"lng":89.345047},"R6C9":{"lat":25.770849,"lng":89.364998},"R7C0":{"lat":25.788816,"lng":89.185443},"R7C1":{"lat":25.788816,"lng":89.205397},"R7C2":{"lat":25.788816,"lng":89.22535},"R7C3":{"lat":25.788816,"lng":89.245304},"R7C4":{"lat":25.788816,"lng":89.265257},"R7C5":{"lat":25.788816,"lng":89.285211},"R7C6":{"lat":25.788816,"lng":89.305164},"R7C7":{"lat":25.788816,"lng":89.325118},"R7C8":{"lat":25.788816,"lng":89.345071},"R7C9":{"lat":25.788816,"lng":89.365025},"R8C0":{"lat":25.806782,"lng":89.185443},"R8C1":{"lat":25.806782,"lng":89.2054},"R8C2":{"lat":25.806782,"lng":89.225356},"R8C3":{"lat":25.806782,"lng":89.245313},"R8C4":{"lat":25.806782,"lng":89.265269},"R8C5":{"lat":25.806782,"lng":89.285226},"R8C6":{"lat":25.806782,"lng":89.305182},"R8C7":{"lat":25.806782,"lng":89.325139},"R8C8":{"lat":25.806782,"lng":89.345095},"R8C9":{"lat":25.806782,"lng":89.365052},"R9C0":{"lat":25.824748,"lng":89.185443},"R9C1":{"lat":25.824748,"lng":89.205403},"R9C2":{"lat":25.824748,"lng":89.225362},"R9C3":{"lat":25.824748,"lng":89.245322},"R9C4":{"lat":25.824748,"lng":89.265281},"R9C5":{"lat":25.824748,"lng":89.285241},"R9C6":{"lat":25.824748,"lng":89.305201},"R9C7":{"lat":25.824748,"lng":89.32516},"R9C8":{"lat":25.824748,"lng":89.34512},"R9C9":{"lat":25.824748,"lng":89.365079}},"providers":{"Provider_0":{"name":"Provider_0","node":"R6C1","lat":25.765508,"lng":89.207463,"services":{"seed":{"price_per_kg":135,"available":true},"sprayer":{"price_per_acre":260,"available":true}}},"Provider_1":{"name":"Provider_1","node":"R3C9","lat":25.716297,"lng":89.366844,"services":{"sprayer":{"price_per_acre":228,"available":true},"seed":{"price_per_kg":210,"available":true},"tractor":{"price_per_acre":248,"available":true}}},"Provider_2":{"name":"Provider_2","node":"R1C9","lat":25.681303,"lng":89.369766,"services":{"sprayer":{"price_per_acre":287,"available":true},"tractor":{"price_per_acre":328,"available":true}}},"Provider_3":{"name":"Provider_3","node":"R1C1","lat":25.682515,"lng":89.205382,"services":{"sprayer":{"price_per_acre":163,"available":true},"tractor":{"price_per_acre":200,"available":true}}},"Provider_4":{"name":"Provider_4","node":"R6C9","lat":25.775742,"lng":89.367466,"services":{"seed":{"price_per_kg":119,"available":true},"sprayer":{"price_per_acre":337,"available":false},"tractor":{"price_per_acre":198,"available":false}}},"Provider_5":{"name":"Provider_5","node":"R7C8","lat":25.792948,"lng":89.348765,"services":{"seed":{"price_per_kg":178,"available":true},"sprayer":{"price_per_acre":237,"available":true},"tractor":{"price_per_acre":242,"available":true}}},"Provider_6":{"name":"Provider_6","node":"R5C3","lat":25.755885,"lng":89.246135,"services":{"sprayer":{"price_per_acre":156,"available":true},"tractor":{"price_per_acre":254,"available":true},"seed":{"price_per_kg":132,"available":true}}},"Provider_7":{"name":"Provider_7","node":"R3C0","lat":25.714758,"lng":89.188624,"services":{"seed":{"price_per_kg":110,"available":true},"tractor":{"price_per_acre":275,"available":true},"sprayer":{"price_per_acre":330,"available":true}}},"Provider_8":{"name":"Provider_8","node":"R6C9","lat":25.770649,"lng":89.36215,"services":{"tractor":{"price_per_acre":239,"available":true},"seed":{"price_per_kg":166,"available":true}}},"Provider_9":{"name":"Provider_9","node":"R2C1","lat":25.702801,"lng":89.206249,"services":{"seed":{"price_per_kg":141,"available":true},"sprayer":{"price_per_acre":280,"available":false},"tractor":{"price_per_acre":318,"available":false}}},"Provider_10":{"name":"Provider_10","node":"R2C2","lat":25.695536,"lng":89.223612,"services":{"sprayer":{"price_per_acre":299,"available":true},"seed":{"price_per_kg":112,"available":false},"tractor":{"price_per_acre":321,"available":true}}},"Provider_11":{"name":"Provider_11","node":"R7C5","lat":25.7848,"lng":89.288255,"services":{"sprayer":{"price_per_acre":313,"available":true},"seed":{"price_per_kg":249,"available":true}}},"Provider_12":{"name":"Provider_12","node":"R5C3","lat":25.758088,"lng":89.249334,"services":{"sprayer":{"price_per_acre":233,"available":false}}},"Provider_13":{"name":"Provider_13","node":"R8C3","lat":25.802987,"lng":89.24505,"services":{"seed":{"price_per_kg":185,"available":true},"sprayer":{"price_per_acre":260,"available":true},"tractor":{"price_per_acre":212,"available":false}}},"Provider_14":{"name":"Provider_14","node":"R8C1","lat":25.810808,"lng":89.201135,"services":{"tractor":{"price_per_acre":239,"available":true},"seed":{"price_per_kg":101,"available":true},"sprayer":{"price_per_acre":346,"available":true}}},"Provider_15":{"name":"Provider_15","node":"R7C6","lat":25.791045,"lng":89.310751,"services":{"sprayer":{"price_per_acre":155,"available":true},"tractor":{"price_per_acre":336,"available":true}}},"Provider_16":{"name":"Provider_16","node":"R6C8","lat":25.776044,"lng":89.346375,"services":{"sprayer":{"price_per_acre":235,"available":true},"tractor":{"price_per_acre":311,"available":true}}},"Provider_17":{"name":"Provider_17","node":"R0C8","lat":25.658319,"lng":89.342959,"services":{"tractor":{"price_per_acre":153,"available":true}}},"Provider_18":{"name":"Provider_18","node":"R2C4","lat":25.697554,"lng":89.259719,"services":{"seed":{"price_per_kg":210,"available":true},"sprayer":{"price_per_acre":150,"available":true},"tractor":{"price_per_acre":184,"available":true}}},"Provider_19":{"name":"Provider_19","node":"R4C8","lat":25.737404,"lng":89.350347,"services":{"sprayer":{"price_per_acre":216,"available":true}}},"Provider_20":{"name":"Provider_20","node":"R2C1","lat":25.699471,"lng":89.209829,"services":{"seed":{"price_per_kg":167,"available":true},"sprayer":{"price_per_acre":301,"available":true}}},"Provider_21":{"name":"Provider_21","node":"R1C1","lat":25.676659,"lng":89.209062,"services":{"tractor":{"price_per_acre":189,"available":true}}},"Provider_22":{"name":"Provider_22","node":"R1C9","lat":25.679047,"lng":89.362165,"services":{"tractor":{"price_per_acre":192,"available":false},"sprayer":{"price_per_acre":178,"available":true},"seed":{"price_per_kg":160,"available":true}}},"Provider_23":{"name":"Provider_23","node":"R0C9","lat":25.662897,"lng":89.363944,"services":{"seed":{"price_per_kg":137,"available":true}}},"Provider_24":{"name":"Provider_24","node":"R8C0","lat":25.803966,"lng":89.188268,"services":{"sprayer":{"price_per_acre":232,"available":false},"tractor":{"price_per_acre":182,"available":true},"seed":{"price_per_kg":202,"available":true}}},"Provider_25":{"name":"Provider_25","node":"R5C1","lat":25.747589,"lng":89.206889,"services":{"seed":{"price_per_kg":101,"available":true},"tractor":{"price_per_acre":259,"available":false}}},"Provider_26":{"name":"Provider_26","node":"R6C2","lat":25.766147,"lng":89.228613,"services":{"seed":{"price_per_kg":153,"available":true},"tractor":{"price_per_acre":203,"available":true},"sprayer":{"price_per_acre":349,"available":true}}},"Provider_27":{"name":"Provider_27","node":"R8C2","lat":25.809313,"lng":89.228644,"services":{"tractor":{"price_per_acre":214,"available":true},"sprayer":{"price_per_acre":150,"available":true},"seed":{"price_per_kg":192,"available":false}}},"Provider_28":{"name":"Provider_28","node":"R4C2","lat":25.734581,"lng":89.222458,"services":{"seed":{"price_per_kg":113,"available":false},"sprayer":{"price_per_acre":252,"available":false}}},"Provider_29":{"name":"Provider_29","node":"R7C3","lat":25.788105,"lng":89.249861,"services":{"tractor":{"price_per_acre":217,"available":true},"sprayer":{"price_per_acre":233,"available":true}}},"Provider_30":{"name":"Provider_30","node":"R2C1","lat":25.702215,"lng":89.20169,"services":{"tractor":{"price_per_acre":318,"available":true},"sprayer":{"price_per_acre":265,"available":false},"seed":{"price_per_kg":184,"available":true}}},"Provider_31":{"name":"Provider_31","node":"R2C0","lat":25.699159,"lng":89.181422,"services":{"sprayer":{"price_per_acre":283,"available":true},"tractor":{"price_per_acre":296,"available":true}}},"Provider_32":{"name":"Provider_32","node":"R2C1","lat":25.702249,"lng":89.206965,"services":{"seed":{"price_per_kg":201,"available":true}}},"Provider_33":{"name":"Provider_33","node":"R7C6","lat":25.786662,"lng":89.299391,"services":{"seed":{"price_per_kg":221,"available":true}}},"Provider_34":{"name":"Provider_34","node":"R3C9","lat":25.713597,"lng":89.35993,"services":{"tractor":{"price_per_acre":251,"available":true}}},"Provider_35":{"name":"Provider_35","node":"R4C0","lat":25.740223,"lng":89.184119,"services":{"seed":{"price_per_kg":225,"available":true}}},"Provider_36":{"name":"Provider_36","node":"R1C3","lat":25.677901,"lng":89.2429,"services":{"seed":{"price_per_kg":161,"available":true},"sprayer":{"price_per_acre":192,"available":true}}},"Provider_37":{"name":"Provider_37","node":"R9C1","lat":25.829481,"lng":89.20584,"services":{"tractor":{"price_per_acre":205,"available":true},"sprayer":{"price_per_acre":217,"available":true},"seed":{"price_per_kg":250,"available":true}}},"Provider_38":{"name":"Provider_38","node":"R9C7","lat":25.829372,"lng":89.327747,"services":{"tractor":{"price_per_acre":181,"available":false}}},"Provider_39":{"name":"Provider_39","node":"R5C6","lat":25.753257,"lng":89.303429,"services":{"seed":{"price_per_kg":140,"available":false}}},"Provider_40":{"name":"Provider_40","node":"R3C0","lat":25.712554,"lng":89.183536,"services":{"tractor":{"price_per_acre":266,"available":true},"sprayer":{"price_per_acre":328,"available":true}}},"Provider_41":{"name":"Provider_41","node":"R6C2","lat":25.774315,"lng":89.225527,"services":{"tractor":{"price_per_acre":165,"available":false}}},"Provider_42":{"name":"Provider_42","node":"R3C8","lat":25.713301,"lng":89.343893,"services":{"sprayer":{"price_per_acre":266,"available":true}}},"Provider_43":{"name":"Provider_43","node":"R7C7","lat":25.787967,"lng":89.320232,"services":{"tractor":{"price_per_acre":233,"available":false},"sprayer":{"price_per_acre":336,"available":true},"seed":{"price_per_kg":217,"available":true}}},"Provider_44":{"name":"Provider_44","node":"R9C9","lat":25.819765,"lng":89.365491,"services":{"tractor":{"price_per_acre":153,"available":true},"seed":{"price_per_kg":229,"available":true}}},"Provider_45":{"name":"Provider_45","node":"R4C3","lat":25.737527,"lng":89.245075,"services":{"seed":{"price_per_kg":175,"available":true},"sprayer":{"price_per_acre":206,"available":true}}},"Provider_46":{"name":"Provider_46","node":"R4C4","lat":25.730337,"lng":89.260291,"services":{"seed":{"price_per_kg":111,"available":true}}},"Provider_47":{"name":"Provider_47","node":"R6C6","lat":25.769471,"lng":89.306664,"services":{"tractor":{"price_per_acre":329,"available":true},"sprayer":{"price_per_acre":302,"available":true},"seed":{"price_per_kg":193,"available":true}}},"Provider_48":{"name":"Provider_48","node":"R8C1","lat":25.80663,"lng":89.201628,"services":{"sprayer":{"price_per_acre":298,"available":true}}},"Provider_49":{"name":"Provider_49","node":"R3C3","lat":25.717138,"lng":89.23933,"services":{"tractor":{"price_per_acre":191,"available":true},"sprayer":{"price_per_acre":236,"available":true},"seed":{"price_per_kg":166,"available":true}}},"Provider_50":{"name":"Provider_50","node":"R5C0","lat":25.752891,"lng":89.190004,"services":{"seed":{"price_per_kg":109,"available":true}}},"Provider_51":{"name":"Provider_51","node":"R3C3","lat":25.717052,"lng":89.250931,"services":{"tractor":{"price_per_acre":153,"available":true}}},"Provider_52":{"name":"Provider_52","node":"R7C0","lat":25.786103,"lng":89.181417,"services":{"sprayer":{"price_per_acre":282,"available":true}}},"Provider_53":{"name":"Provider_53","node":"R3C1","lat":25.715348,"lng":89.201703,"services":{"tractor":{"price_per_acre":242,"available":true}}},"Provider_54":{"name":"Provider_54","node":"R6C5","lat":25.77611,"lng":89.284304,"services":{"seed":{"price_per_kg":139,"available":true},"sprayer":{"price_per_acre":171,"available":false},"tractor":{"price_per_acre":176,"available":true}}},"Provider_55":{"name":"Provider_55","node":"R5C2","lat":25.750958,"lng":89.222496,"services":{"tractor":{"price_per_acre":267,"available":true},"sprayer":{"price_per_acre":200,"available":true}}},"Provider_56":{"name":"Provider_56","node":"R2C7","lat":25.697159,"lng":89.321812,"services":{"seed":{"price_per_kg":151,"available":true}}},"Provider_57":{"name":"Provider_57","node":"R8C8","lat":25.810054,"lng":89.345427,"services":{"sprayer":{"price_per_acre":309,"available":true},"tractor":{"price_per_acre":197,"available":true}}},"Provider_58":{"name":"Provider_58","node":"R4C7","lat":25.738936,"lng":89.327663,"services":{"sprayer":{"price_per_acre":268,"available":true}}},"Provider_59":{"name":"Provider_59","node":"R1C5","lat":25.679416,"lng":89.287937,"services":{"tractor":{"price_per_acre":169,"available":true},"sprayer":{"price_per_acre":163,"available":true},"seed":{"price_per_kg":126,"available":true}}},"Provider_60":{"name":"Provider_60","node":"R3C6","lat":25.718285,"lng":89.301202,"services":{"seed":{"price_per_kg":242,"available":true}}},"Provider_61":{"name":"Provider_61","node":"R6C1","lat":25.772687,"lng":89.206166,"services":{"sprayer":{"price_per_acre":286,"available":true},"tractor":{"price_per_acre":338,"available":true},"seed":{"price_per_kg":109,"available":false}}},"Provider_62":{"name":"Provider_62","node":"R9C7","lat":25.828358,"lng":89.321475,"services":{"tractor":{"price_per_acre":247,"available":true},"sprayer":{"price_per_acre":336,"available":true}}},"Provider_63":{"name":"Provider_63","node":"R5C8","lat":25.757451,"lng":89.345132,"services":{"sprayer":{"price_per_acre":288,"available":true},"tractor":{"price_per_acre":337,"available":true},"seed":{"price_per_kg":227,"available":false}}},"Provider_64":{"name":"Provider_64","node":"R2C7","lat":25.696649,"lng":89.329376,"services":{"seed":{"price_per_kg":142,"available":true},"sprayer":{"price_per_acre":311,"available":false},"tractor":{"price_per_acre":316,"available":true}}},"Provider_65":{"name":"Provider_65","node":"R2C4","lat":25.700771,"lng":89.265856,"services":{"seed":{"price_per_kg":192,"available":false},"tractor":{"price_per_acre":330,"available":false},"sprayer":{"price_per_acre":302,"available":false}}},"Provider_66":{"name":"Provider_66","node":"R7C9","lat":25.790525,"lng":89.370745,"services":{"sprayer":{"price_per_acre":264,"available":false},"tractor":{"price_per_acre":295,"available":true},"seed":{"price_per_kg":118,"available":true}}},"Provider_67":{"name":"Provider_67","node":"R1C7","lat":25.678728,"lng":89.327467,"services":{"sprayer":{"price_per_acre":287,"available":true},"tractor":{"price_per_acre":294,"available":true},"seed":{"price_per_kg":144,"available":true}}},"Provider_68":{"name":"Provider_68","node":"R1C1","lat":25.678494,"lng":89.199821,"services":{"seed":{"price_per_kg":187,"available":true},"tractor":{"price_per_acre":154,"available":false},"sprayer":{"price_per_acre":304,"available":false}}},"Provider_69":{"name":"Provider_69","node":"R2C7","lat":25.695955,"lng":89.328756,"services":{"tractor":{"price_per_acre":344,"available":true}}},"Provider_70":{"name":"Provider_70","node":"R6C7","lat":25.775594,"lng":89.330424,"services":{"tractor":{"price_per_acre":282,"available":true},"sprayer":{"price_per_acre":182,"available":true}}},"Provider_71":{"name":"Provider_71","node":"R5C9","lat":25.75019,"lng":89.359376,"services":{"tractor":{"price_per_acre":335,"available":true},"sprayer":{"price_per_acre":279,"available":true},"seed":{"price_per_kg":155,"available":false}}},"Provider_72":{"name":"Provider_72","node":"R4C7","lat":25.737347,"lng":89.321835,"services":{"tractor":{"price_per_acre":266,"available":true},"sprayer":{"price_per_acre":205,"available":true}}},"Provider_73":{"name":"Provider_73","node":"R7C5","lat":25.790137,"lng":89.280554,"services":{"seed":{"price_per_kg":184,"available":true},"sprayer":{"price_per_acre":223,"available":true},"tractor":{"price_per_acre":153,"available":true}}},"Provider_74":{"name":"Provider_74","node":"R4C6","lat":25.729881,"lng":89.309076,"services":{"seed":{"price_per_kg":242,"available":true},"tractor":{"price_per_acre":282,"available":true},"sprayer":{"price_per_acre":289,"available":false}}},"Provider_75":{"name":"Provider_75","node":"R2C2","lat":25.693839,"lng":89.230675,"services":{"seed":{"price_per_kg":146,"available":false},"tractor":{"price_per_acre":158,"available":false},"sprayer":{"price_per_acre":242,"available":true}}},"Provider_76":{"name":"Provider_76","node":"R4C8","lat":25.731988,"lng":89.339886,"services":{"tractor":{"price_per_acre":171,"available":false},"sprayer":{"price_per_acre":349,"available":true},"seed":{"price_per_kg":121,"available":true}}},"Provider_77":{"name":"Provider_77","node":"R4C4","lat":25.739785,"lng":89.26214,"services":{"sprayer":{"price_per_acre":235,"available":true},"seed":{"price_per_kg":224,"available":true}}},"Provider_78":{"name":"Provider_78","node":"R2C6","lat":25.703221,"lng":89.306163,"services":{"sprayer":{"price_per_acre":221,"available":true}}},"Provider_79":{"name":"Provider_79","node":"R3C9","lat":25.717474,"lng":89.366692,"services":{"sprayer":{"price_per_acre":240,"available":true},"tractor":{"price_per_acre":211,"available":false},"seed":{"price_per_kg":155,"available":true}}},"Provider_80":{"name":"Provider_80","node":"R3C3","lat":25.720369,"lng":89.249247,"services":{"seed":{"price_per_kg":146,"available":true}}},"Provider_81":{"name":"Provider_81","node":"R1C4","lat":25.682126,"lng":89.269774,"services":{"tractor":{"price_per_acre":194,"available":false},"sprayer":{"price_per_acre":204,"available":false},"seed":{"price_per_kg":104,"available":true}}},"Provider_82":{"name":"Provider_82","node":"R7C6","lat":25.789705,"lng":89.30629,"services":{"tractor":{"price_per_acre":347,"available":true}}},"Provider_83":{"name":"Provider_83","node":"R0C3","lat":25.668256,"lng":89.244353,"services":{"seed":{"price_per_kg":219,"available":true}}},"Provider_84":{"name":"Provider_84","node":"R6C9","lat":25.767354,"lng":89.367398,"services":{"sprayer":{"price_per_acre":300,"available":true}}},"Provider_85":{"name":"Provider_85","node":"R4C7","lat":25.73675,"lng":89.326167,"services":{"seed":{"price_per_kg":213,"available":true},"sprayer":{"price_per_acre":285,"available":true}}},"Provider_86":{"name":"Provider_86","node":"R7C2","lat":25.78831,"lng":89.223496,"services":{"tractor":{"price_per_acre":324,"available":true},"sprayer":{"price_per_acre":220,"available":true},"seed":{"price_per_kg":214,"available":true}}},"Provider_87":{"name":"Provider_87","node":"R5C4","lat":25.749902,"lng":89.260842,"services":{"seed":{"price_per_kg":198,"available":true},"tractor":{"price_per_acre":200,"available":true},"sprayer":{"price_per_acre":300,"available":true}}},"Provider_88":{"name":"Provider_88","node":"R2C1","lat":25.698894,"lng":89.206483,"services":{"sprayer":{"price_per_acre":225,"available":true},"tractor":{"price_per_acre":195,"available":true},"seed":{"price_per_kg":110,"available":true}}},"Provider_89":{"name":"Provider_89","node":"R7C3","lat":25.793965,"lng":89.240995,"services":{"tractor":{"price_per_acre":271,"available":false}}},"Provider_90":{"name":"Provider_90","node":"R4C0","lat":25.734638,"lng":89.19037,"services":{"sprayer":{"price_per_acre":271,"available":true}}},"Provider_91":{"name":"Provider_91","node":"R1C9","lat":25.685153,"lng":89.36201,"services":{"seed":{"price_per_kg":109,"available":false},"sprayer":{"price_per_acre":314,"available":true},"tractor":{"price_per_acre":269,"available":true}}},"Provider_92":{"name":"Provider_92","node":"R4C9","lat":25.739303,"lng":89.363422,"services":{"tractor":{"price_per_acre":294,"available":false}}},"Provider_93":{"name":"Provider_93","node":"R2C1","lat":25.704124,"lng":89.210487,"services":{"tractor":{"price_per_acre":347,"available":false}}},"Provider_94":{"name":"Provider_94","node":"R6C1","lat":25.770747,"lng":89.206658,"services":{"seed":{"price_per_kg":144,"available":true},"sprayer":{"price_per_acre":252,"available":true}}},"Provider_95":{"name":"Provider_95","node":"R0C2","lat":25.657978,"lng":89.228392,"services":{"tractor":{"price_per_acre":185,"available":true},"sprayer":{"price_per_acre":155,"available":true},"seed":{"price_per_kg":169,"available":false}}},"Provider_96":{"name":"Provider_96","node":"R4C8","lat":25.733549,"lng":89.343742,"services":{"tractor":{"price_per_acre":286,"available":true},"sprayer":{"price_per_acre":246,"available":true},"seed":{"price_per_kg":140,"available":true}}},"Provider_97":{"name":"Provider_97","node":"R2C7","lat":25.698792,"lng":89.319119,"services":{"sprayer":{"price_per_acre":157,"available":false},"tractor":{"price_per_acre":251,"available":true},"seed":{"price_per_kg":130,"available":false}}},"Provider_98":{"name":"Provider_98","node":"R6C8","lat":25.769613,"lng":89.348713,"services":{"tractor":{"price_per_acre":231,"available":true}}},"Provider_99":{"name":"Provider_99","node":"R9C4","lat":25.820943,"lng":89.264692,"services":{"tractor":{"price_per_acre":226,"available":true},"sprayer":{"price_per_acre":233,"available":true},"seed":{"price_per_kg":148,"available":true}}}}};
+const PROVIDERS = DATA.providers;
+const META = DATA.meta;
+
+const EARTH_RADIUS_KM = 6371;
+const toRad = (d) => (d * Math.PI) / 180;
+function haversineKm(a, b) {
+  const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
+}
+
+const map = L.map("map").setView([META.center.lat, META.center.lng], 11);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+}).addTo(map);
+
+document.getElementById("region").textContent =
+  META.region + " • " + META.grid + " • " + META.step_km + " km/step";
+
+let farmer = { lat: META.center.lat, lng: META.center.lng };
+let farmerMarker = null;
+let line = null;
+let bestMarker = null;
+const providerMarkers = {};
+
+function service() { return document.getElementById("service").value; }
+
+function colorFor(p) {
+  const s = (p.services || {})[service()];
+  if (!s) return "#9e9e9e";
+  return s.available ? "#2e7d32" : "#fb8c00";
+}
+
+function popupHtml(p) {
+  const rows = Object.entries(p.services || {}).map(([k, v]) => {
+    const price = k === "seed" ? v.price_per_kg + " Tk/kg" : v.price_per_acre + " Tk/acre";
+    return `<div>${k}: ${price} ${v.available ? "" : "(unavailable)"}</div>`;
+  }).join("");
+  return `<b>${p.name}</b> (node ${p.node})<br/>${rows}`;
+}
+
+Object.entries(PROVIDERS).forEach(([id, p]) => {
+  const m = L.circleMarker([p.lat, p.lng], {
+    radius: 6, color: "#fff", weight: 1, fillColor: colorFor(p), fillOpacity: 0.95,
+  }).bindPopup(popupHtml(p)).addTo(map);
+  providerMarkers[id] = m;
+});
+
+function refreshColors() {
+  Object.values(PROVIDERS).forEach((p) => providerMarkers[p.name].setStyle({ fillColor: colorFor(p) }));
+}
+
+function setFarmer(lat, lng) {
+  farmer = { lat, lng };
+  document.getElementById("lat").value = lat.toFixed(6);
+  document.getElementById("lng").value = lng.toFixed(6);
+  if (farmerMarker) map.removeLayer(farmerMarker);
+  farmerMarker = L.marker([lat, lng], { title: "Farmer" }).addTo(map);
+  if (line) { map.removeLayer(line); line = null; }
+  if (bestMarker) { map.removeLayer(bestMarker); bestMarker = null; }
+}
+
+map.on("click", (e) => setFarmer(e.latlng.lat, e.latlng.lng));
+
+document.getElementById("service").addEventListener("change", () => {
+  const isSeed = service() === "seed";
+  document.getElementById("acresWrap").style.display = isSeed ? "none" : "block";
+  document.getElementById("kgWrap").style.display = isSeed ? "block" : "none";
+  refreshColors();
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+  map.setView([META.center.lat, META.center.lng], 11);
+  setFarmer(META.center.lat, META.center.lng);
+  document.getElementById("result").innerHTML = "";
+});
+
+document.getElementById("find").addEventListener("click", () => {
+  const reqType = service();
+  const acres = Number(document.getElementById("acres").value) || 0;
+  const kg = Number(document.getElementById("kg").value) || 0;
+  const maxDist = Number(document.getElementById("maxDist").value) || 0;
+  const maxCost = Number(document.getElementById("maxCost").value) || 0;
+  const rate = Number(document.getElementById("rate").value) || 0;
+
+  const ranked = [];
+  for (const p of Object.values(PROVIDERS)) {
+    const s = (p.services || {})[reqType];
+    if (!s || !s.available) continue;
+    const dist = haversineKm(farmer, { lat: p.lat, lng: p.lng });
+    if (dist > maxDist) continue;
+    const serviceCost = reqType === "seed" ? s.price_per_kg * kg : s.price_per_acre * acres;
+    const total = serviceCost + dist * rate;
+    if (total > maxCost) continue;
+    const score = 0.7 * (total / maxCost) + 0.3 * (dist / maxDist);
+    ranked.push([score, p, dist, total]);
+  }
+  ranked.sort((a, b) => a[0] - b[0]);
+
+  const box = document.getElementById("result");
+  if (ranked.length === 0) {
+    box.innerHTML = '<div class="best">❌ No eligible provider. Adjust criteria.</div>';
+    return;
+  }
+
+  const [ , best, bdist, bcost] = ranked[0];
+  box.innerHTML =
+    '<div class="best">✅ Best: <b>' + best.name + '</b><br/>' +
+    bdist.toFixed(2) + ' km • ' + bcost.toFixed(0) + ' Tk</div>' +
+    '<ol>' + ranked.slice(0, 8).map(([, p, d, c]) =>
+      '<li>' + p.name + ' — ' + d.toFixed(2) + ' km, ' + c.toFixed(0) + ' Tk</li>'
+    ).join("") + '</ol>';
+
+  if (line) map.removeLayer(line);
+  line = L.polyline([[farmer.lat, farmer.lng], [best.lat, best.lng]],
+    { color: "#1565c0", weight: 3, dashArray: "6 6" }).addTo(map);
+
+  if (bestMarker) map.removeLayer(bestMarker);
+  bestMarker = L.circleMarker([best.lat, best.lng],
+    { radius: 10, color: "#1565c0", weight: 3, fillColor: "#2e7d32", fillOpacity: 1 }).addTo(map);
+  bestMarker.bindPopup("<b>BEST: " + best.name + "</b>").openPopup();
+  map.fitBounds(line.getBounds(), { padding: [60, 60] });
+});
+
+setFarmer(META.center.lat, META.center.lng);
+</script>
+</body>
+</html>

@@ -10,20 +10,20 @@ import {
   View,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { fetchAllData } from "@/services/api";
-import { farmMatch } from "@/utils/farmMatchEngine";
+import { loadGeoContext, runGeoMatch } from "@/services/geoClient";
 
 const SERVICE_TYPES = ["tractor", "sprayer", "seed"];
 
 export default function SimulatorScreen() {
-  // Data from API
-  const [graph, setGraph] = useState(null);
+  // Data from API (Supabase or json-server, real coordinates)
   const [providers, setProviders] = useState(null);
+  const [region, setRegion] = useState("");
+  const [source, setSource] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Farmer request state
+  // Farmer request state (lat/lng around Rangpur, Bangladesh)
   const [farmer, setFarmer] = useState({
-    location: "R0C0",
+    location: { lat: 23.8103, lng: 90.4125 },
     service_type: "tractor",
     acres: 5,
     kg_needed: 0,
@@ -40,12 +40,14 @@ export default function SimulatorScreen() {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await fetchAllData();
-        setGraph(data.graph);
-        setProviders(data.providers);
+        const ctx = await loadGeoContext();
+        setRegion(ctx.region);
+        setSource(ctx.source);
+        setProviders(ctx.providers);
+        setFarmer((f) => ({ ...f, location: ctx.center }));
       } catch (error) {
         console.error("Failed to load data:", error.message);
-        alert("Could not connect to API. Make sure json-server is running.");
+        alert("Could not connect to the backend. Check json-server / .env.");
       } finally {
         setLoading(false);
       }
@@ -59,19 +61,25 @@ export default function SimulatorScreen() {
     setResult(null); // clear old result
   };
 
+  const updateLocation = (axis, value) => {
+    setFarmer({
+      ...farmer,
+      location: { ...farmer.location, [axis]: Number(value) || 0 },
+    });
+    setResult(null);
+  };
+
   // Run FarmMatch
-  const runMatch = () => {
-    if (!graph || !providers) {
-      alert("Data not loaded yet.");
-      return;
-    }
+  const runMatch = async () => {
     setIsMatching(true);
-    // Simulate network delay (optional)
-    setTimeout(() => {
-      const matchResult = farmMatch(graph, providers, farmer);
-      setResult(matchResult);
+    try {
+      setResult(await runGeoMatch(farmer, providers));
+    } catch (error) {
+      console.error("Match failed:", error.message);
+      alert("Match failed: " + error.message);
+    } finally {
       setIsMatching(false);
-    }, 300);
+    }
   };
 
   // Helper to render a ranked candidate
@@ -100,16 +108,29 @@ export default function SimulatorScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>🚜 FarmMatch Simulator</Text>
+      <Text style={styles.region}>
+        {region} • {source}
+      </Text>
 
       {/* Input fields */}
       <View style={styles.section}>
-        <Text style={styles.label}>Location (grid node)</Text>
-        <TextInput
-          style={styles.input}
-          value={farmer.location}
-          onChangeText={(text) => updateFarmer("location", text)}
-          placeholder="e.g. R2C3"
-        />
+        <Text style={styles.label}>Location (lat, lng)</Text>
+        <View style={styles.row}>
+          <TextInput
+            style={[styles.input, styles.flex]}
+            keyboardType="numeric"
+            value={String(farmer.location.lat)}
+            onChangeText={(text) => updateLocation("lat", text)}
+            placeholder="Latitude"
+          />
+          <TextInput
+            style={[styles.input, styles.flex]}
+            keyboardType="numeric"
+            value={String(farmer.location.lng)}
+            onChangeText={(text) => updateLocation("lng", text)}
+            placeholder="Longitude"
+          />
+        </View>
 
         <Text style={styles.label}>Service Type</Text>
         <Picker
@@ -226,9 +247,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 4,
     textAlign: "center",
   },
+  region: { textAlign: "center", fontSize: 13, color: "#666", marginBottom: 16 },
+  row: { flexDirection: "row", gap: 8 },
+  flex: { flex: 1 },
   section: {
     backgroundColor: "#fff",
     padding: 15,
