@@ -195,7 +195,8 @@ async function parseGeofabrik() {
   const elements = [];
   let nodesKept = 0;
   let waysKept = 0;
-  const parser = osmPBF(fs.createReadStream(CACHE_PBF));
+  const parser = osmPBF();
+  fs.createReadStream(CACHE_PBF).pipe(parser);
   await new Promise((resolve, reject) => {
     parser.on("data", (batch) => {
       for (const el of batch) {
