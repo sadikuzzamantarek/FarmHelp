@@ -216,7 +216,7 @@ export default function MapScreen() {
               </Text>
             )}
           </View>
-          <Text style={styles.chevron}>{expanded ? "▼" : "▲"}</Text>
+          <Text style={styles.chevron}>{expanded ? "Collapse ▼" : "Expand ▲"}</Text>
         </Pressable>
 
         {expanded && (
