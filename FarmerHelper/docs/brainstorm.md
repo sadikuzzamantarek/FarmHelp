@@ -1,0 +1,2 @@
+# Farmhelp Platform
+# Overall Idea

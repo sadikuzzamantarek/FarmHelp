@@ -1,0 +1,1763 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.207463,
+          25.765508
+        ]
+      },
+      "properties": {
+        "id": "Provider_0",
+        "node": "R6C1",
+        "services": [
+          "seed",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.366844,
+          25.716297
+        ]
+      },
+      "properties": {
+        "id": "Provider_1",
+        "node": "R3C9",
+        "services": [
+          "sprayer",
+          "seed",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.369766,
+          25.681303
+        ]
+      },
+      "properties": {
+        "id": "Provider_2",
+        "node": "R1C9",
+        "services": [
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.205382,
+          25.682515
+        ]
+      },
+      "properties": {
+        "id": "Provider_3",
+        "node": "R1C1",
+        "services": [
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.367466,
+          25.775742
+        ]
+      },
+      "properties": {
+        "id": "Provider_4",
+        "node": "R6C9",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.348765,
+          25.792948
+        ]
+      },
+      "properties": {
+        "id": "Provider_5",
+        "node": "R7C8",
+        "services": [
+          "seed",
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.246135,
+          25.755885
+        ]
+      },
+      "properties": {
+        "id": "Provider_6",
+        "node": "R5C3",
+        "services": [
+          "sprayer",
+          "tractor",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.188624,
+          25.714758
+        ]
+      },
+      "properties": {
+        "id": "Provider_7",
+        "node": "R3C0",
+        "services": [
+          "seed",
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.36215,
+          25.770649
+        ]
+      },
+      "properties": {
+        "id": "Provider_8",
+        "node": "R6C9",
+        "services": [
+          "tractor",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.206249,
+          25.702801
+        ]
+      },
+      "properties": {
+        "id": "Provider_9",
+        "node": "R2C1",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.223612,
+          25.695536
+        ]
+      },
+      "properties": {
+        "id": "Provider_10",
+        "node": "R2C2",
+        "services": [
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.288255,
+          25.7848
+        ]
+      },
+      "properties": {
+        "id": "Provider_11",
+        "node": "R7C5",
+        "services": [
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.249334,
+          25.758088
+        ]
+      },
+      "properties": {
+        "id": "Provider_12",
+        "node": "R5C3",
+        "services": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.24505,
+          25.802987
+        ]
+      },
+      "properties": {
+        "id": "Provider_13",
+        "node": "R8C3",
+        "services": [
+          "seed",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.201135,
+          25.810808
+        ]
+      },
+      "properties": {
+        "id": "Provider_14",
+        "node": "R8C1",
+        "services": [
+          "tractor",
+          "seed",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.310751,
+          25.791045
+        ]
+      },
+      "properties": {
+        "id": "Provider_15",
+        "node": "R7C6",
+        "services": [
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.346375,
+          25.776044
+        ]
+      },
+      "properties": {
+        "id": "Provider_16",
+        "node": "R6C8",
+        "services": [
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.342959,
+          25.658319
+        ]
+      },
+      "properties": {
+        "id": "Provider_17",
+        "node": "R0C8",
+        "services": [
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.259719,
+          25.697554
+        ]
+      },
+      "properties": {
+        "id": "Provider_18",
+        "node": "R2C4",
+        "services": [
+          "seed",
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.350347,
+          25.737404
+        ]
+      },
+      "properties": {
+        "id": "Provider_19",
+        "node": "R4C8",
+        "services": [
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.209829,
+          25.699471
+        ]
+      },
+      "properties": {
+        "id": "Provider_20",
+        "node": "R2C1",
+        "services": [
+          "seed",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.209062,
+          25.676659
+        ]
+      },
+      "properties": {
+        "id": "Provider_21",
+        "node": "R1C1",
+        "services": [
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.362165,
+          25.679047
+        ]
+      },
+      "properties": {
+        "id": "Provider_22",
+        "node": "R1C9",
+        "services": [
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.363944,
+          25.662897
+        ]
+      },
+      "properties": {
+        "id": "Provider_23",
+        "node": "R0C9",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.188268,
+          25.803966
+        ]
+      },
+      "properties": {
+        "id": "Provider_24",
+        "node": "R8C0",
+        "services": [
+          "tractor",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.206889,
+          25.747589
+        ]
+      },
+      "properties": {
+        "id": "Provider_25",
+        "node": "R5C1",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.228613,
+          25.766147
+        ]
+      },
+      "properties": {
+        "id": "Provider_26",
+        "node": "R6C2",
+        "services": [
+          "seed",
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.228644,
+          25.809313
+        ]
+      },
+      "properties": {
+        "id": "Provider_27",
+        "node": "R8C2",
+        "services": [
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.222458,
+          25.734581
+        ]
+      },
+      "properties": {
+        "id": "Provider_28",
+        "node": "R4C2",
+        "services": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.249861,
+          25.788105
+        ]
+      },
+      "properties": {
+        "id": "Provider_29",
+        "node": "R7C3",
+        "services": [
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.20169,
+          25.702215
+        ]
+      },
+      "properties": {
+        "id": "Provider_30",
+        "node": "R2C1",
+        "services": [
+          "tractor",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.181422,
+          25.699159
+        ]
+      },
+      "properties": {
+        "id": "Provider_31",
+        "node": "R2C0",
+        "services": [
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.206965,
+          25.702249
+        ]
+      },
+      "properties": {
+        "id": "Provider_32",
+        "node": "R2C1",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.299391,
+          25.786662
+        ]
+      },
+      "properties": {
+        "id": "Provider_33",
+        "node": "R7C6",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.35993,
+          25.713597
+        ]
+      },
+      "properties": {
+        "id": "Provider_34",
+        "node": "R3C9",
+        "services": [
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.184119,
+          25.740223
+        ]
+      },
+      "properties": {
+        "id": "Provider_35",
+        "node": "R4C0",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.2429,
+          25.677901
+        ]
+      },
+      "properties": {
+        "id": "Provider_36",
+        "node": "R1C3",
+        "services": [
+          "seed",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.20584,
+          25.829481
+        ]
+      },
+      "properties": {
+        "id": "Provider_37",
+        "node": "R9C1",
+        "services": [
+          "tractor",
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.327747,
+          25.829372
+        ]
+      },
+      "properties": {
+        "id": "Provider_38",
+        "node": "R9C7",
+        "services": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.303429,
+          25.753257
+        ]
+      },
+      "properties": {
+        "id": "Provider_39",
+        "node": "R5C6",
+        "services": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.183536,
+          25.712554
+        ]
+      },
+      "properties": {
+        "id": "Provider_40",
+        "node": "R3C0",
+        "services": [
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.225527,
+          25.774315
+        ]
+      },
+      "properties": {
+        "id": "Provider_41",
+        "node": "R6C2",
+        "services": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.343893,
+          25.713301
+        ]
+      },
+      "properties": {
+        "id": "Provider_42",
+        "node": "R3C8",
+        "services": [
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.320232,
+          25.787967
+        ]
+      },
+      "properties": {
+        "id": "Provider_43",
+        "node": "R7C7",
+        "services": [
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.365491,
+          25.819765
+        ]
+      },
+      "properties": {
+        "id": "Provider_44",
+        "node": "R9C9",
+        "services": [
+          "tractor",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.245075,
+          25.737527
+        ]
+      },
+      "properties": {
+        "id": "Provider_45",
+        "node": "R4C3",
+        "services": [
+          "seed",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.260291,
+          25.730337
+        ]
+      },
+      "properties": {
+        "id": "Provider_46",
+        "node": "R4C4",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.306664,
+          25.769471
+        ]
+      },
+      "properties": {
+        "id": "Provider_47",
+        "node": "R6C6",
+        "services": [
+          "tractor",
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.201628,
+          25.80663
+        ]
+      },
+      "properties": {
+        "id": "Provider_48",
+        "node": "R8C1",
+        "services": [
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.23933,
+          25.717138
+        ]
+      },
+      "properties": {
+        "id": "Provider_49",
+        "node": "R3C3",
+        "services": [
+          "tractor",
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.190004,
+          25.752891
+        ]
+      },
+      "properties": {
+        "id": "Provider_50",
+        "node": "R5C0",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.250931,
+          25.717052
+        ]
+      },
+      "properties": {
+        "id": "Provider_51",
+        "node": "R3C3",
+        "services": [
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.181417,
+          25.786103
+        ]
+      },
+      "properties": {
+        "id": "Provider_52",
+        "node": "R7C0",
+        "services": [
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.201703,
+          25.715348
+        ]
+      },
+      "properties": {
+        "id": "Provider_53",
+        "node": "R3C1",
+        "services": [
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.284304,
+          25.77611
+        ]
+      },
+      "properties": {
+        "id": "Provider_54",
+        "node": "R6C5",
+        "services": [
+          "seed",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.222496,
+          25.750958
+        ]
+      },
+      "properties": {
+        "id": "Provider_55",
+        "node": "R5C2",
+        "services": [
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.321812,
+          25.697159
+        ]
+      },
+      "properties": {
+        "id": "Provider_56",
+        "node": "R2C7",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.345427,
+          25.810054
+        ]
+      },
+      "properties": {
+        "id": "Provider_57",
+        "node": "R8C8",
+        "services": [
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.327663,
+          25.738936
+        ]
+      },
+      "properties": {
+        "id": "Provider_58",
+        "node": "R4C7",
+        "services": [
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.287937,
+          25.679416
+        ]
+      },
+      "properties": {
+        "id": "Provider_59",
+        "node": "R1C5",
+        "services": [
+          "tractor",
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.301202,
+          25.718285
+        ]
+      },
+      "properties": {
+        "id": "Provider_60",
+        "node": "R3C6",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.206166,
+          25.772687
+        ]
+      },
+      "properties": {
+        "id": "Provider_61",
+        "node": "R6C1",
+        "services": [
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.321475,
+          25.828358
+        ]
+      },
+      "properties": {
+        "id": "Provider_62",
+        "node": "R9C7",
+        "services": [
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.345132,
+          25.757451
+        ]
+      },
+      "properties": {
+        "id": "Provider_63",
+        "node": "R5C8",
+        "services": [
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.329376,
+          25.696649
+        ]
+      },
+      "properties": {
+        "id": "Provider_64",
+        "node": "R2C7",
+        "services": [
+          "seed",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.265856,
+          25.700771
+        ]
+      },
+      "properties": {
+        "id": "Provider_65",
+        "node": "R2C4",
+        "services": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.370745,
+          25.790525
+        ]
+      },
+      "properties": {
+        "id": "Provider_66",
+        "node": "R7C9",
+        "services": [
+          "tractor",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.327467,
+          25.678728
+        ]
+      },
+      "properties": {
+        "id": "Provider_67",
+        "node": "R1C7",
+        "services": [
+          "sprayer",
+          "tractor",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.199821,
+          25.678494
+        ]
+      },
+      "properties": {
+        "id": "Provider_68",
+        "node": "R1C1",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.328756,
+          25.695955
+        ]
+      },
+      "properties": {
+        "id": "Provider_69",
+        "node": "R2C7",
+        "services": [
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.330424,
+          25.775594
+        ]
+      },
+      "properties": {
+        "id": "Provider_70",
+        "node": "R6C7",
+        "services": [
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.359376,
+          25.75019
+        ]
+      },
+      "properties": {
+        "id": "Provider_71",
+        "node": "R5C9",
+        "services": [
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.321835,
+          25.737347
+        ]
+      },
+      "properties": {
+        "id": "Provider_72",
+        "node": "R4C7",
+        "services": [
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.280554,
+          25.790137
+        ]
+      },
+      "properties": {
+        "id": "Provider_73",
+        "node": "R7C5",
+        "services": [
+          "seed",
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.309076,
+          25.729881
+        ]
+      },
+      "properties": {
+        "id": "Provider_74",
+        "node": "R4C6",
+        "services": [
+          "seed",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.230675,
+          25.693839
+        ]
+      },
+      "properties": {
+        "id": "Provider_75",
+        "node": "R2C2",
+        "services": [
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.339886,
+          25.731988
+        ]
+      },
+      "properties": {
+        "id": "Provider_76",
+        "node": "R4C8",
+        "services": [
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.26214,
+          25.739785
+        ]
+      },
+      "properties": {
+        "id": "Provider_77",
+        "node": "R4C4",
+        "services": [
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.306163,
+          25.703221
+        ]
+      },
+      "properties": {
+        "id": "Provider_78",
+        "node": "R2C6",
+        "services": [
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.366692,
+          25.717474
+        ]
+      },
+      "properties": {
+        "id": "Provider_79",
+        "node": "R3C9",
+        "services": [
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.249247,
+          25.720369
+        ]
+      },
+      "properties": {
+        "id": "Provider_80",
+        "node": "R3C3",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.269774,
+          25.682126
+        ]
+      },
+      "properties": {
+        "id": "Provider_81",
+        "node": "R1C4",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.30629,
+          25.789705
+        ]
+      },
+      "properties": {
+        "id": "Provider_82",
+        "node": "R7C6",
+        "services": [
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.244353,
+          25.668256
+        ]
+      },
+      "properties": {
+        "id": "Provider_83",
+        "node": "R0C3",
+        "services": [
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.367398,
+          25.767354
+        ]
+      },
+      "properties": {
+        "id": "Provider_84",
+        "node": "R6C9",
+        "services": [
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.326167,
+          25.73675
+        ]
+      },
+      "properties": {
+        "id": "Provider_85",
+        "node": "R4C7",
+        "services": [
+          "seed",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.223496,
+          25.78831
+        ]
+      },
+      "properties": {
+        "id": "Provider_86",
+        "node": "R7C2",
+        "services": [
+          "tractor",
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.260842,
+          25.749902
+        ]
+      },
+      "properties": {
+        "id": "Provider_87",
+        "node": "R5C4",
+        "services": [
+          "seed",
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.206483,
+          25.698894
+        ]
+      },
+      "properties": {
+        "id": "Provider_88",
+        "node": "R2C1",
+        "services": [
+          "sprayer",
+          "tractor",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.240995,
+          25.793965
+        ]
+      },
+      "properties": {
+        "id": "Provider_89",
+        "node": "R7C3",
+        "services": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.19037,
+          25.734638
+        ]
+      },
+      "properties": {
+        "id": "Provider_90",
+        "node": "R4C0",
+        "services": [
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.36201,
+          25.685153
+        ]
+      },
+      "properties": {
+        "id": "Provider_91",
+        "node": "R1C9",
+        "services": [
+          "sprayer",
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.363422,
+          25.739303
+        ]
+      },
+      "properties": {
+        "id": "Provider_92",
+        "node": "R4C9",
+        "services": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.210487,
+          25.704124
+        ]
+      },
+      "properties": {
+        "id": "Provider_93",
+        "node": "R2C1",
+        "services": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.206658,
+          25.770747
+        ]
+      },
+      "properties": {
+        "id": "Provider_94",
+        "node": "R6C1",
+        "services": [
+          "seed",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.228392,
+          25.657978
+        ]
+      },
+      "properties": {
+        "id": "Provider_95",
+        "node": "R0C2",
+        "services": [
+          "tractor",
+          "sprayer"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.343742,
+          25.733549
+        ]
+      },
+      "properties": {
+        "id": "Provider_96",
+        "node": "R4C8",
+        "services": [
+          "tractor",
+          "sprayer",
+          "seed"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.319119,
+          25.698792
+        ]
+      },
+      "properties": {
+        "id": "Provider_97",
+        "node": "R2C7",
+        "services": [
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.348713,
+          25.769613
+        ]
+      },
+      "properties": {
+        "id": "Provider_98",
+        "node": "R6C8",
+        "services": [
+          "tractor"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          89.264692,
+          25.820943
+        ]
+      },
+      "properties": {
+        "id": "Provider_99",
+        "node": "R9C4",
+        "services": [
+          "tractor",
+          "sprayer",
+          "seed"
+        ]
+      }
+    }
+  ]
+}
