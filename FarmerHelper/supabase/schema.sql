@@ -23,8 +23,15 @@ create table if not exists provider_services (
   service_type text not null check (service_type in ('tractor', 'sprayer', 'seed')),
   price        numeric not null, -- per kg (seed) or per acre (tractor/sprayer)
   available    boolean not null default true,
+  -- Seed only: per-variety prices, e.g.
+  -- { "potato": { "price_per_kg": 85, "available": true }, "bean": {...} }
+  seed_varieties jsonb,
   primary key (provider_id, service_type)
 );
+
+-- Older projects created the table before seed varieties existed.
+alter table provider_services
+  add column if not exists seed_varieties jsonb;
 
 -- Radius query + Haversine-scale distance (ST_DistanceSphere on a sphere =
 -- the same formula as utils/geoEngine.haversineKm) in a single call.

@@ -40,7 +40,27 @@
           }
         }
       ],
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-font",
+        {
+          "fonts": ["./assets/font/BanglaFont.ttf"],
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "BanglaFont",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/font/BanglaFont.ttf",
+                    "weight": 500,
+                    "style": "normal"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

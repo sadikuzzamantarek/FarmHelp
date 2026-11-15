@@ -1,5 +1,6 @@
 import { fetchAllGeo } from "./api";
 import {
+  fetchAllProviderServices,
   fetchAllProviders,
   fetchNearbyProviders,
   fetchNearbyProvidersRoad,
@@ -23,7 +24,7 @@ const buildResult = (ranked, ranking_time_ms) => {
       ranking_time_ms,
     };
   }
-  const [score, provider, dist, cost] = ranked[0];
+  const [, provider, dist, cost] = ranked[0];
   return {
     success: true,
     best_provider: provider,
@@ -36,20 +37,117 @@ const buildResult = (ranked, ranking_time_ms) => {
 };
 
 /**
+ * Turn provider_services rows into the `services` shape the client engine
+ * expects: { tractor: { price, price_per_acre, available }, seed: {...} }.
+ * Seed offers also carry `varieties` when the database has them.
+ */
+function groupOffersByProvider(rows) {
+  const byProvider = {};
+  for (const row of rows) {
+    const price = Number(row.price);
+    const bucket = (byProvider[row.provider_id] ||= {});
+    bucket[row.service_type] = {
+      price,
+      price_per_acre: row.service_type === "seed" ? undefined : price,
+      price_per_kg: row.service_type === "seed" ? price : undefined,
+      available: row.available !== false,
+      ...(row.service_type === "seed" && row.seed_varieties
+        ? { varieties: row.seed_varieties }
+        : {}),
+    };
+  }
+  return byProvider;
+}
+
+/** True when at least one provider carries per-variety seed prices. */
+function hasSeedVarietyData(providers) {
+  return Object.values(providers || {}).some((provider) => {
+    const varieties = provider?.services?.seed?.varieties;
+    return !!varieties && Object.keys(varieties).length > 0;
+  });
+}
+
+/**
+ * Replace the RPC's base seed price with the selected variety's price and drop
+ * providers that do not sell that variety. If the dataset has no varieties at
+ * all (older database), keep the base price and report a fallback.
+ */
+function applySeedVariety(rows, req, providers) {
+  if (req.service_type !== "seed" || !req.seed_type) {
+    return { rows, fallback: false };
+  }
+  if (!providers) {
+    return { rows, fallback: true };
+  }
+
+  let fallback = false;
+  const enriched = [];
+
+  for (const row of rows) {
+    const provider = providers[row.name] ?? providers[row.id];
+    const seedOffer = provider?.services?.seed;
+    if (!seedOffer) continue;
+
+    const varieties = seedOffer.varieties;
+    if (!varieties || Object.keys(varieties).length === 0) {
+      // Legacy data: rank with the base per-kg price.
+      fallback = true;
+      enriched.push(row);
+      continue;
+    }
+
+    const variety = varieties[req.seed_type];
+    if (!variety || variety.available === false) continue;
+
+    const price = Number(variety.price_per_kg ?? variety.price);
+    if (!Number.isFinite(price) || price <= 0) continue;
+
+    enriched.push({ ...row, price });
+  }
+
+  return { rows: enriched, fallback };
+}
+
+function localFallback(providers, req) {
+  const result = findBestProvider(providers, req);
+  const seedFallback =
+    req.service_type === "seed" && req.seed_type
+      ? !hasSeedVarietyData(providers)
+      : false;
+  return {
+    ...result,
+    distance_kind: distanceLabel(),
+    seed_variety_fallback: seedFallback,
+  };
+}
+
+/**
  * Load either Supabase (PostGIS) or json-server (db.geo.json) context.
  * Supabase wins when it is configured; otherwise falls back gracefully.
  */
 export async function loadGeoContext() {
   if (isSupabaseConfigured()) {
-    const rows = await fetchAllProviders();
+    let servicesUnavailable = false;
+    const [rows, offers] = await Promise.all([
+      fetchAllProviders(),
+      fetchAllProviderServices().catch(() => {
+        servicesUnavailable = true;
+        return [];
+      }),
+    ]);
+    const offersByProvider = groupOffersByProvider(offers);
     const providers = Object.fromEntries(
-      rows.map((r) => [r.name || r.id, { ...r, services: {} }]),
+      rows.map((r) => [
+        r.name || r.id,
+        { ...r, services: offersByProvider[r.id] ?? {} },
+      ]),
     );
     return {
       region: DEFAULT_REGION,
       center: DEFAULT_CENTER,
       providers,
       source: "Supabase / PostGIS",
+      servicesUnavailable,
     };
   }
   const { providers, meta } = await fetchAllGeo();
@@ -58,6 +156,7 @@ export async function loadGeoContext() {
     center: meta?.center ?? DEFAULT_CENTER,
     providers,
     source: "json-server (db.geo.json)",
+    servicesUnavailable: false,
   };
 }
 
@@ -93,7 +192,7 @@ export async function runGeoMatch(req, providers) {
           serviceType: req.service_type,
         });
       } catch (e) {
-        if (providers) return { ...findBestProvider(providers, req), distance_kind: distanceLabel() };
+        if (providers) return localFallback(providers, req);
         throw e;
       }
     }
@@ -106,20 +205,22 @@ export async function runGeoMatch(req, providers) {
         serviceType: req.service_type,
       });
     } catch (e) {
-      if (providers && slow(e)) return { ...findBestProvider(providers, req), distance_kind: distanceLabel() };
+      if (providers && slow(e)) return localFallback(providers, req);
       throw e;
     }
   }
 
   if (rows) {
-    const ranked = rankCandidateRows(rows, req);
+    const seeded = applySeedVariety(rows, req, providers);
+    const ranked = rankCandidateRows(seeded.rows, req);
     return {
       ...buildResult(ranked, Date.now() - t0),
       distance_kind: distanceLabel(),
+      seed_variety_fallback: seeded.fallback,
     };
   }
   if (!providers) throw new Error("Providers not loaded");
-  return findBestProvider(providers, req);
+  return localFallback(providers, req);
 }
 
 // Detect which distance layer the backend currently offers. First call decides
@@ -147,4 +248,8 @@ async function getDistanceKind() {
     return _distanceKind;
   }
 }
-const distanceLabel = () => (_distanceKind === "road" ? "road" : "haversine");
+const distanceLabel = () => {
+  if (_distanceKind === "road") return "road";
+  if (_distanceKind === "json-server") return "json-server";
+  return "haversine";
+};

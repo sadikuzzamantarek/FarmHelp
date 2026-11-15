@@ -1,98 +1,446 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { useRouter } from "expo-router";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { ServiceTile } from "@/components/service-tile";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { withAlpha } from "@/constants/app-theme";
+import {
+  SERVICES,
+  getServiceAccent,
+  type ServiceDefinition,
+} from "@/constants/services";
+import { useAppTheme } from "@/contexts/app-theme";
+
+const H_PADDING = 16;
+const GAP = 12;
+
+const STEPS = [
+  {
+    icon: "gesture-tap" as const,
+    title: "Pick a service",
+    body: "Choose tractor, sprayer or seed.",
+  },
+  {
+    icon: "map-search-outline" as const,
+    title: "Compare nearby providers",
+    body: "See price, distance and the road route.",
+  },
+  {
+    icon: "calendar-check-outline" as const,
+    title: "Book and track",
+    body: "Booking and job tracking are coming next.",
+    soon: true,
+  },
+];
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const { colors, mode, isDark } = useAppTheme();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const tileWidth = Math.min(
+    240,
+    Math.floor((width - H_PADDING * 2 - GAP) / 2),
+  );
+
+  const openService = (service: ServiceDefinition) => {
+    // Seed opens the variety catalogue first; tractor/sprayer go straight to
+    // the filtered map.
+    if (service.id === "seed") {
+      router.push({ pathname: "/seeds" });
+      return;
+    }
+    router.push({
+      pathname: "/map",
+      params: { service: service.id },
+    });
+  };
+
+  const showComingSoon = () => {
+    Alert.alert(
+      "More services coming",
+      "Harvester, labour, transport and other services will be added here one by one.",
+    );
+  };
+
+  return (
+    <View style={[styles.flex, { backgroundColor: colors.background }]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: H_PADDING,
+          paddingTop: insets.top + 12,
+          paddingBottom: 40,
+        }}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <View
+              style={[
+                styles.brandMark,
+                { backgroundColor: colors.primarySoft },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name="sprout"
+                size={22}
+                color={colors.primary}
+              />
+            </View>
+            <View>
+              <Text style={[styles.brand, { color: colors.text }]}>
+                FarmHelper
+              </Text>
+              <View style={styles.locationRow}>
+                <MaterialCommunityIcons
+                  name="map-marker"
+                  size={12}
+                  color={colors.textMuted}
+                />
+                <Text style={[styles.location, { color: colors.textMuted }]}>
+                  Rangpur, Bangladesh
+                </Text>
+              </View>
+            </View>
+          </View>
+          <ThemeToggle />
+        </View>
+
+        {/* Hero */}
+        <View
+          style={[styles.hero, { backgroundColor: colors.primarySoft }]}
+        >
+          <Text style={[styles.heroTitle, { color: colors.text }]}>
+            What do you need today?
+          </Text>
+          <Text style={[styles.heroBody, { color: colors.textMuted }]}>
+            Choose a service. We show nearby providers with their price and the
+            real road distance to your land.
+          </Text>
+          <View
+            style={[
+              styles.heroBadge,
+              { backgroundColor: withAlpha(colors.primary, isDark ? 0.2 : 0.14) },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="road-variant"
+              size={13}
+              color={colors.primary}
+            />
+            <Text style={[styles.heroBadgeText, { color: colors.primary }]}>
+              Road-distance matching
+            </Text>
+          </View>
+        </View>
+
+        {/* Services */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Services
+          </Text>
+          <Text style={[styles.sectionMeta, { color: colors.textMuted }]}>
+            {SERVICES.length} available
+          </Text>
+        </View>
+
+        <View style={styles.grid}>
+          {SERVICES.map((service) => (
+            <ServiceTile
+              key={service.id}
+              service={service}
+              width={tileWidth}
+              onPress={() => openService(service)}
+            />
+          ))}
+
+          {/* Extensibility is visible: new services land in this grid. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="More services coming soon"
+            onPress={showComingSoon}
+            style={({ pressed }) => [
+              styles.moreTile,
+              {
+                width: tileWidth,
+                borderColor: colors.border,
+                backgroundColor: pressed ? colors.chip : "transparent",
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.moreIcon,
+                { borderColor: colors.border, backgroundColor: colors.surface },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name="plus"
+                size={26}
+                color={colors.textMuted}
+              />
+            </View>
+            <Text style={[styles.moreTitle, { color: colors.text }]}>
+              More services
+            </Text>
+            <Text style={[styles.moreBody, { color: colors.textMuted }]}>
+              Harvester, labour, transport…
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* How it works */}
+        <View
+          style={[
+            styles.howCard,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.howTitle, { color: colors.text }]}>
+            How it works
+          </Text>
+          {STEPS.map((step, index) => {
+            const stepColor =
+              index === 0
+                ? getServiceAccent(SERVICES[0], mode)
+                : index === 1
+                  ? getServiceAccent(SERVICES[1], mode)
+                  : getServiceAccent(SERVICES[2], mode);
+            return (
+              <View key={step.title} style={styles.stepRow}>
+                <View
+                  style={[
+                    styles.stepIcon,
+                    {
+                      backgroundColor: withAlpha(
+                        stepColor,
+                        isDark ? 0.2 : 0.14,
+                      ),
+                    },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name={step.icon}
+                    size={18}
+                    color={stepColor}
+                  />
+                </View>
+                <View style={styles.stepText}>
+                  <View style={styles.stepTitleRow}>
+                    <Text style={[styles.stepTitle, { color: colors.text }]}>
+                      {step.title}
+                    </Text>
+                    {step.soon ? (
+                      <View
+                        style={[
+                          styles.soonBadge,
+                          { backgroundColor: colors.accentSoft },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.soonText, { color: colors.accent }]}
+                        >
+                          SOON
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text style={[styles.stepBody, { color: colors.textMuted }]}>
+                    {step.body}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        <Text style={[styles.footnote, { color: colors.textMuted }]}>
+          Demo data · Provider records are synthetic test data. Map data ©
+          OpenStreetMap contributors.
+        </Text>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  flex: { flex: 1 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 18,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  brandMark: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  brand: {
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: 0.2,
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    marginTop: 2,
+  },
+  location: {
+    fontSize: 11.5,
+    fontWeight: "600",
+  },
+  hero: {
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 22,
+  },
+  heroTitle: {
+    fontSize: 25,
+    fontWeight: "800",
+    lineHeight: 31,
+    letterSpacing: -0.3,
+  },
+  heroBody: {
+    fontSize: 13.5,
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  heroBadge: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginTop: 12,
+  },
+  heroBadgeText: {
+    fontSize: 11.5,
+    fontWeight: "700",
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+  },
+  sectionMeta: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: GAP,
+    marginBottom: 24,
+  },
+  moreTile: {
+    minHeight: 176,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    padding: 14,
+    alignItems: "flex-start",
+    justifyContent: "center",
+  },
+  moreIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  moreTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  moreBody: {
+    fontSize: 12.5,
+    lineHeight: 17,
+    marginTop: 3,
+  },
+  howCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 18,
+  },
+  howTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    marginBottom: 12,
+  },
+  stepRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    marginBottom: 12,
+  },
+  stepIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepText: { flex: 1, paddingTop: 1 },
+  stepTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  stepTitle: {
+    fontSize: 13.5,
+    fontWeight: "700",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  stepBody: {
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 1,
+  },
+  soonBadge: {
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  soonText: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  footnote: {
+    fontSize: 11,
+    lineHeight: 16,
+    textAlign: "center",
+    paddingHorizontal: 8,
   },
 });
