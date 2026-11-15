@@ -6,6 +6,23 @@ export const EARTH_RADIUS_KM = 6371;
 const toRad = (deg) => (deg * Math.PI) / 180;
 
 /**
+ * Price per kg for a selected seed variety.
+ * - number: use this price
+ * - null:    no variety data in the dataset (legacy) -> use the base price
+ * - undefined: the provider does not sell this variety -> skip the provider
+ */
+function seedPriceFor(info, seedId) {
+  const varieties = info?.varieties;
+  if (!varieties || Object.keys(varieties).length === 0) return null;
+
+  const variety = varieties[seedId];
+  if (!variety || variety.available === false) return undefined;
+
+  const price = Number(variety.price_per_kg ?? variety.price);
+  return Number.isFinite(price) && price > 0 ? price : undefined;
+}
+
+/**
  * Great-circle (Haversine) distance between two { lat, lng } points, in km.
  */
 export function haversineKm(a, b) {
@@ -47,12 +64,18 @@ export function rankProviders(providers, req) {
     const info = services[reqType];
     if (!info.available) continue;
 
+    let seedPrice = null;
+    if (reqType === "seed" && req.seed_type) {
+      seedPrice = seedPriceFor(info, req.seed_type);
+      if (seedPrice === undefined) continue;
+    }
+
     const distKm = haversineKm(location, { lat: p.lat, lng: p.lng });
     if (distKm > maxDist) continue;
 
     const serviceCost =
       reqType === "seed"
-        ? info.price_per_kg * kg_needed
+        ? (seedPrice ?? info.price_per_kg) * kg_needed
         : info.price_per_acre * acres;
 
     const totalCost = serviceCost + distKm * travelRate;

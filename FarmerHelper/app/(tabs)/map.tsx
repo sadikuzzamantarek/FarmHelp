@@ -1,448 +1,277 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Button,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import {
-  Camera,
-  GeoJSONSource,
-  Layer,
-  Map,
-  Marker,
-} from "@maplibre/maplibre-react-native";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import Constants from "expo-constants";
+import React, { Component, Suspense, type ReactNode } from "react";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import {
-  DEFAULT_CENTER,
-  loadGeoContext,
-  runGeoMatch,
-} from "../../services/geoClient";
-import { fetchRoadPath } from "../../services/supabase";
-
-const OSM_STYLE = "https://tiles.openfreemap.org/styles/liberty";
-const SERVICE_TYPES = ["tractor", "sprayer", "seed"];
+import { useAppTheme } from "@/contexts/app-theme";
+import { Skeleton } from "@/components/skeleton";
 
 /**
- * MapLibre + OpenFreeMap farm-matching screen (no API key).
- * Never blocks: renders Rangpur center immediately and loads provider
- * markers in the background from Supabase or json-server.
+ * The real map lives outside `app/` because `@maplibre/maplibre-react-native`
+ * is a native module. Importing it eagerly crashes the whole app in Expo Go
+ * (and on web), taking every other route down with it.
  *
- * Requires a development build (MapLibre is NOT available in Expo Go).
+ * Loading it lazily means: Home and Simulator keep working, and the Map tab
+ * shows a clear "development build required" notice instead of an
+ * Invariant Violation.
  */
-export default function MapScreen() {
-  const mapRef = useRef<any>(null);
+const IS_EXPO_GO = Constants.executionEnvironment === "storeClient";
+const CAN_LOAD_NATIVE_MAP = !IS_EXPO_GO && Platform.OS !== "web";
 
-  const [providers, setProviders] = useState<any>({});
-  const [center, setCenter] = useState<any>(DEFAULT_CENTER);
-  const [result, setResult] = useState<any>(null);
-  const [status, setStatus] = useState("Connecting to backend...");
-  const [expanded, setExpanded] = useState(true);
-  const [showCandidates, setShowCandidates] = useState(false);
-  const [roadLine, setRoadLine] = useState<[number, number][] | null>(null);
+const MapScreen = CAN_LOAD_NATIVE_MAP
+  ? React.lazy(() => import("../../features/map/map-screen"))
+  : null;
 
-  // Farmer request options
-  const [serviceType, setServiceType] = useState("tractor");
-  const [acres, setAcres] = useState("5");
-  const [kgNeeded, setKgNeeded] = useState("20");
-  const [maxDistanceKm, setMaxDistanceKm] = useState("12");
-  const [maxTotalCostTk, setMaxTotalCostTk] = useState("2000");
-  const [travelCostPerKm, setTravelCostPerKm] = useState("10");
+type BoundaryProps = {
+  children: ReactNode;
+  fallback: (error: Error) => ReactNode;
+};
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const ctx = await loadGeoContext();
-        setProviders(ctx.providers ?? {});
-        setCenter(ctx.center);
-        setStatus(ctx.source);
-      } catch (error: any) {
-        console.error("Backend unavailable:", error.message);
-        setStatus("Backend unreachable — showing map only");
-      }
-    };
-    load();
-  }, []);
+type BoundaryState = { error: Error | null };
 
-  const onRegionDidChange = async () => {
-    const c = await mapRef.current?.getCenter(); // [lng, lat]
-    if (c) setCenter({ lat: c[1], lng: c[0] });
-  };
+class MapLoadBoundary extends Component<BoundaryProps, BoundaryState> {
+  state: BoundaryState = { error: null };
 
-  const runMatch = async () => {
-    if (!center) return;
-    const req = {
-      location: center,
-      service_type: serviceType,
-      acres: Number(acres) || 0,
-      kg_needed: Number(kgNeeded) || 0,
-      max_distance_km: Number(maxDistanceKm) || 0,
-      max_total_cost_tk: Number(maxTotalCostTk) || 0,
-      travel_cost_per_km_tk: Number(travelCostPerKm) || 0,
-    };
-    try {
-      const r = await runGeoMatch(req, providers);
-      setResult(r);
-      setShowCandidates(true);
-      setRoadLine(null);
-      setStatus(
-        (r as any).distance_kind === "road"
-          ? "✓ real road distance (pgRouting)"
-          : (r as any).distance_kind === "haversine"
-            ? "✓ Haversine distance"
-            : "✓ json-server",
-      );
-      if ((r as any).distance_kind === "road" && r.success && providers[r.best_provider]) {
-        const target = providers[r.best_provider];
-        fetchRoadPath(center, { lat: target.lat, lng: target.lng })
-          .then((gj: any) => setRoadLine(gj ? gj.coordinates : null))
-          .catch(() => setRoadLine(null));
-      }
-    } catch (error: any) {
-      setStatus("Match failed: " + error.message);
-    }
-  };
+  static getDerivedStateFromError(error: Error): BoundaryState {
+    return { error };
+  }
 
-  const isSeed = serviceType === "seed";
-  const best = result?.success ? providers[result.best_provider] : null;
-  const hasRoadPath = !!(roadLine && roadLine.length > 1);
-  const route: GeoJSON.Feature | null =
-    best && center
-      ? {
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "LineString",
-            coordinates:
-              hasRoadPath && best
-                ? roadLine
-                : [
-                    [center.lng, center.lat],
-                    [best.lng, best.lat],
-                  ],
-          },
-        }
-      : null;
+  render() {
+    if (this.state.error) return this.props.fallback(this.state.error);
+    return this.props.children;
+  }
+}
 
+function MapLoading() {
+  const { colors } = useAppTheme();
   return (
-    <View style={styles.flex}>
-      <Map
-        ref={mapRef}
-        mapStyle={OSM_STYLE}
-        onRegionDidChange={onRegionDidChange}
-        style={styles.flex}
+    <View style={[styles.flex, { backgroundColor: colors.background }]}>
+      <View
+        style={[StyleSheet.absoluteFill, { backgroundColor: colors.chip }]}
+      />
+
+      <View style={styles.loadingTop}>
+        <Skeleton width={150} height={30} radius={15} />
+      </View>
+
+      <View
+        style={[
+          styles.loadingCard,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
       >
-        <Camera
-          initialViewState={{ center: [center.lng, center.lat], zoom: 11 }}
-        />
-
-        {Object.entries(providers).map(([id, p]: [string, any]) => (
-          <Marker key={id} lngLat={[p.lng, p.lat]} anchor="bottom">
-            <View style={styles.providerPin}>
-              <Text style={styles.pinText}>🚜</Text>
-            </View>
-          </Marker>
-        ))}
-
-        {route && (
-          <GeoJSONSource id="route" data={route}>
-            {hasRoadPath ? (
-              <>
-                <Layer
-                  id="route-casing"
-                  type="line"
-                  style={{
-                    lineColor: "#1b1b1b",
-                    lineWidth: 8,
-                    lineCap: "round",
-                    lineJoin: "round",
-                  }}
-                />
-                <Layer
-                  id="route-line"
-                  type="line"
-                  style={{
-                    lineColor: "#ff9800",
-                    lineWidth: 4,
-                    lineCap: "round",
-                    lineJoin: "round",
-                  }}
-                />
-              </>
-            ) : (
-              <Layer
-                id="route-dashed"
-                type="line"
-                style={{
-                  lineColor: "#1565c0",
-                  lineWidth: 4,
-                  lineDasharray: [4, 2],
-                }}
-              />
-            )}
-          </GeoJSONSource>
-        )}
-      </Map>
-
-      {/* Backend status badge */}
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{status}</Text>
-      </View>
-
-      {/* Fixed farmer crosshair = map center */}
-      <View pointerEvents="none" style={styles.crosshair}>
-        <Text style={styles.crosshairDot}>📍</Text>
-      </View>
-
-      {/* Options + result card */}
-      <View style={styles.card}>
-        <Pressable
-          onPress={() => setExpanded(!expanded)}
-          style={styles.cardHeader}
-        >
-          <View style={styles.cardHeaderText}>
-            <Text style={styles.title}>Booking options</Text>
-            {result?.success ? (
-              <Text style={styles.headerBest} numberOfLines={1}>
-                Best: {result.best_provider} • {result.best_distance_km.toFixed(1)}{" "}
-                km • {result.best_total_cost_tk.toFixed(0)} Tk
-              </Text>
-            ) : (
-              <Text style={styles.coords}>
-                {center.lat.toFixed(5)}, {center.lng.toFixed(5)}
-              </Text>
-            )}
+        <View style={styles.loadingHeader}>
+          <Skeleton width={42} height={42} radius={13} />
+          <View style={styles.loadingHeaderText}>
+            <Skeleton width="55%" height={14} />
+            <Skeleton width="82%" height={10} />
           </View>
-          <Text style={styles.chevron}>{expanded ? "Collapse ▼" : "Expand ▲"}</Text>
-        </Pressable>
+        </View>
 
-        {expanded && (
-          <ScrollView
-            style={styles.cardScroll}
-            keyboardShouldPersistTaps="handled"
-          >
-          <Text style={styles.label}>Service type</Text>
-          <View style={styles.chips}>
-            {SERVICE_TYPES.map((t) => (
-              <Pressable
-                key={t}
-                style={[styles.chip, serviceType === t && styles.chipActive]}
-                onPress={() => setServiceType(t)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    serviceType === t && styles.chipTextActive,
-                  ]}
-                >
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+        <View style={styles.loadingRow}>
+          <Skeleton height={38} radius={10} style={styles.loadingThird} />
+          <Skeleton height={38} radius={10} style={styles.loadingThird} />
+          <Skeleton height={38} radius={10} style={styles.loadingThird} />
+        </View>
+        <Skeleton height={38} radius={10} style={styles.loadingGap} />
+        <Skeleton height={48} radius={12} style={styles.loadingGap} />
 
-          {isSeed ? (
-            <>
-              <Text style={styles.label}>Kg needed</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={kgNeeded}
-                onChangeText={setKgNeeded}
-              />
-            </>
-          ) : (
-            <>
-              <Text style={styles.label}>Acres</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={acres}
-                onChangeText={setAcres}
-              />
-            </>
-          )}
-
-          <View style={styles.row}>
-            <View style={styles.half}>
-              <Text style={styles.label}>Max distance (km)</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={maxDistanceKm}
-                onChangeText={setMaxDistanceKm}
-              />
-            </View>
-            <View style={styles.half}>
-              <Text style={styles.label}>Travel cost / km (Tk)</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={travelCostPerKm}
-                onChangeText={setTravelCostPerKm}
-              />
-            </View>
-          </View>
-
-          <Text style={styles.label}>Max total cost (Tk)</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={maxTotalCostTk}
-            onChangeText={setMaxTotalCostTk}
-          />
-
-          <Button title="Find best provider" onPress={runMatch} />
-
-          {result?.success ? (
-            <>
-              <Text style={styles.best}>
-                Best: {result.best_provider} — {result.best_distance_km.toFixed(1)}{" "}
-                km • {result.best_total_cost_tk.toFixed(0)} Tk
-              </Text>
-              <Pressable
-                onPress={() => setShowCandidates(!showCandidates)}
-                style={styles.candidatesToggle}
-              >
-                <Text style={styles.candidatesToggleText}>
-                  {showCandidates ? "Hide" : "Show"} all{" "}
-                  {result.ranked_candidates.length} eligible providers{" "}
-                  {showCandidates ? "▲" : "▼"}
-                </Text>
-              </Pressable>
-              {showCandidates &&
-                (result.ranked_candidates as any[]).map(
-                  (line: any, i: number) => {
-                    const [, name, dist, cost] = line;
-                    return (
-                      <View
-                        key={name + i}
-                        style={[
-                          styles.candidateRow,
-                          i === 0 && styles.candidateRowBest,
-                        ]}
-                      >
-                        <Text style={styles.candidateRank}>{i + 1}.</Text>
-                        <Text style={styles.candidateName} numberOfLines={1}>
-                          {name}
-                        </Text>
-                        <Text style={styles.candidateMeta}>
-                          {dist.toFixed(1)} km • {cost.toFixed(0)} Tk
-                        </Text>
-                      </View>
-                    );
-                  },
-                )}
-            </>
-          ) : result ? (
-            <Text style={styles.none}>No eligible provider.</Text>
-          ) : null}
-          </ScrollView>
-        )}
+        <Text style={[styles.loadingText, { color: colors.textMuted }]}>
+          Loading map…
+        </Text>
       </View>
     </View>
   );
 }
 
+/** Shown when MapLibre is not in the current binary (Expo Go / web / old build). */
+function MapUnavailable({ error }: { error: Error }) {
+  const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
+
+  const reason = IS_EXPO_GO
+    ? "You are running in Expo Go. MapLibre is a native module, so it only exists in FarmerHelper's own development build — not in Expo Go."
+    : Platform.OS === "web"
+      ? "The map uses a native module, so it is not available in the web preview. Open the app in the Android development build."
+      : "This installed app does not include the MapLibre native module. Rebuild it once and the map will work.";
+
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={[
+        styles.noticeContent,
+        { paddingTop: insets.top + 28 },
+      ]}
+    >
+      <View
+        style={[styles.noticeIcon, { backgroundColor: colors.accentSoft }]}
+      >
+        <MaterialCommunityIcons
+          name="map-marker-off-outline"
+          size={30}
+          color={colors.accent}
+        />
+      </View>
+
+      <Text style={[styles.noticeTitle, { color: colors.text }]}>
+        The map needs a development build
+      </Text>
+
+      <Text style={[styles.noticeBody, { color: colors.textMuted }]}>
+        {reason}
+      </Text>
+
+      <View
+        style={[
+          styles.stepsCard,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.step, { color: colors.text }]}>
+          1. Close Expo Go.
+        </Text>
+        <Text style={[styles.step, { color: colors.text }]}>
+          2. In the project folder, run:
+        </Text>
+        <View style={[styles.codeBlock, { backgroundColor: colors.chip }]}>
+          <Text style={[styles.code, { color: colors.primary }]}>
+            npm run android
+          </Text>
+        </View>
+        <Text style={[styles.step, { color: colors.text }]}>
+          3. Open the installed FarmerHelper app and tap Find.
+        </Text>
+      </View>
+
+      <Text style={[styles.noticeHint, { color: colors.textMuted }]}>
+        Home, the service tiles and the Simulator keep working without the map.
+      </Text>
+
+      {__DEV__ ? (
+        <Text style={[styles.debug, { color: colors.textMuted }]}>
+          Technical detail: {error.message}
+        </Text>
+      ) : null}
+    </ScrollView>
+  );
+}
+
+export default function MapRoute() {
+  if (!MapScreen) {
+    return (
+      <MapUnavailable
+        error={new Error("MapLibre is unavailable in this environment")}
+      />
+    );
+  }
+
+  return (
+    <MapLoadBoundary fallback={(error) => <MapUnavailable error={error} />}>
+      <Suspense fallback={<MapLoading />}>
+        <MapScreen />
+      </Suspense>
+    </MapLoadBoundary>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  badge: {
+  loadingTop: {
     position: "absolute",
-    top: 16,
-    alignSelf: "center",
-    backgroundColor: "rgba(0,0,0,0.6)",
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  badgeText: { color: "#fff", fontSize: 12 },
-  crosshair: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    marginLeft: -16,
-    marginTop: -28,
-  },
-  crosshairDot: { fontSize: 32 },
-  providerPin: {
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderRadius: 16,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
-  pinText: { fontSize: 16 },
-  card: {
-    position: "absolute",
-    bottom: 16,
+    top: 60,
     left: 16,
     right: 16,
-    maxHeight: "48%",
-    backgroundColor: "rgba(255,255,255,0.97)",
-    borderRadius: 10,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    alignItems: "flex-start",
   },
-  cardScroll: { flexGrow: 0 },
-  cardHeader: {
+  loadingCard: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 14,
+  },
+  loadingHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 10,
   },
-  cardHeaderText: { flex: 1, paddingRight: 8 },
-  chevron: { fontSize: 14, color: "#2e7d32", padding: 4 },
-  headerBest: { fontSize: 12, color: "#2e7d32", fontWeight: "600" },
-  title: { fontWeight: "700", marginBottom: 2 },
-  coords: { fontSize: 13, color: "#555", marginBottom: 6 },
-  label: { fontWeight: "600", fontSize: 12, marginTop: 6, marginBottom: 2 },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 6,
-    fontSize: 13,
-  },
-  picker: { height: 44, width: "100%" },
-  chips: { flexDirection: "row", gap: 6 },
-  chip: {
+  loadingHeaderText: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingVertical: 8,
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    gap: 7,
   },
-  chipActive: { backgroundColor: "#2e7d32", borderColor: "#2e7d32" },
-  chipText: { fontSize: 13, fontWeight: "600", color: "#333" },
-  chipTextActive: { color: "#fff" },
-  row: { flexDirection: "row", gap: 8 },
-  half: { flex: 1 },
-  best: { marginTop: 10, color: "#2e7d32", fontWeight: "700" },
-  candidatesToggle: {
-    marginTop: 8,
-    paddingVertical: 6,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-  },
-  candidatesToggleText: { fontSize: 13, color: "#1565c0", fontWeight: "600" },
-  candidateRow: {
+  loadingRow: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    gap: 6,
+    marginTop: 14,
   },
-  candidateRowBest: { backgroundColor: "#e8f5e9" },
-  candidateRank: { width: 22, fontWeight: "700", fontSize: 13 },
-  candidateName: { flex: 1, fontSize: 13, marginRight: 6 },
-  candidateMeta: { fontSize: 12, color: "#555" },
-  candidates: { fontSize: 12, color: "#555", marginTop: 2 },
-  none: { marginTop: 10, color: "#c62828" },
+  loadingThird: {
+    flex: 1,
+  },
+  loadingGap: {
+    marginTop: 10,
+  },
+  loadingText: {
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 10,
+    textAlign: "center",
+  },
+  noticeContent: {
+    paddingHorizontal: 22,
+    paddingBottom: 32,
+  },
+  noticeIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  noticeTitle: {
+    fontSize: 23,
+    fontWeight: "800",
+    lineHeight: 29,
+  },
+  noticeBody: {
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 8,
+  },
+  stepsCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    marginTop: 18,
+    gap: 8,
+  },
+  step: {
+    fontSize: 13.5,
+    lineHeight: 20,
+    fontWeight: "600",
+  },
+  codeBlock: {
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginVertical: 2,
+  },
+  code: {
+    fontFamily: "monospace",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  noticeHint: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    marginTop: 16,
+  },
+  debug: {
+    fontSize: 10.5,
+    lineHeight: 15,
+    marginTop: 18,
+  },
 });

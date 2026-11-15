@@ -47,6 +47,30 @@ export async function fetchAllProviders() {
 }
 
 /**
+ * All service offers — used to (a) show only relevant markers for the
+ * selected service and (b) let the client-side fallback rank Supabase
+ * providers when both RPCs are unavailable (fixes gap G-04).
+ *
+ * `seed_varieties` is optional: older databases may not have the column yet,
+ * so we retry without it rather than breaking the whole map.
+ */
+export async function fetchAllProviderServices() {
+  const client = getSupabase();
+  if (!client) throw new Error("Supabase is not configured (.env)");
+
+  const withVarieties = await client
+    .from("provider_services")
+    .select("provider_id, service_type, price, available, seed_varieties");
+  if (!withVarieties.error) return withVarieties.data ?? [];
+
+  const base = await client
+    .from("provider_services")
+    .select("provider_id, service_type, price, available");
+  if (base.error) throw withVarieties.error;
+  return base.data ?? [];
+}
+
+/**
  * Ask PostGIS for providers within radius that offer a service.
  * Distance is computed server-side (Haversine/sphere).
  * @returns rows: { id, name, lat, lng, distance_km, price, available }

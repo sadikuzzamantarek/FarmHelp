@@ -43,7 +43,7 @@ if (!url || !serviceKey) {
 let supabase;
 try {
   supabase = require("@supabase/supabase-js").createClient(url, serviceKey);
-} catch (e) {
+} catch {
   console.error("❌ @supabase/supabase-js not installed. Run: npm i @supabase/supabase-js");
   process.exit(1);
 }
@@ -61,6 +61,7 @@ for (const [id, p] of Object.entries(providers)) {
       service_type,
       price: s.price_per_kg ?? s.price_per_acre,
       available: s.available,
+      seed_varieties: s.varieties ?? null,
     });
   }
 }
@@ -77,6 +78,11 @@ async function main() {
   const { error: e2 } = await supabase.from("provider_services").upsert(serviceRows);
   if (e2) {
     console.error("❌ provider_services:", e2.message);
+    if (/seed_varieties/i.test(e2.message)) {
+      console.error(
+        "   → Run the `alter table provider_services add column ...` statement in supabase/schema.sql first.",
+      );
+    }
     process.exitCode = 1;
     return;
   }

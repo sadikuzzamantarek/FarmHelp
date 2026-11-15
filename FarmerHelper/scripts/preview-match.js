@@ -30,6 +30,7 @@ function rankProviders(providers, req) {
   const {
     location,
     service_type: reqType,
+    seed_type: seedType,
     acres = 0,
     kg_needed = 0,
     max_distance_km: maxDist,
@@ -42,11 +43,25 @@ function rankProviders(providers, req) {
     const s = (p.services || {})[reqType];
     if (!s || !s.available) continue;
 
+    let seedPrice = null;
+    if (reqType === "seed" && seedType) {
+      const varieties = s.varieties;
+      if (varieties && Object.keys(varieties).length > 0) {
+        const variety = varieties[seedType];
+        if (!variety || variety.available === false) continue;
+        const value = Number(variety.price_per_kg ?? variety.price);
+        if (!Number.isFinite(value) || value <= 0) continue;
+        seedPrice = value;
+      }
+    }
+
     const distKm = haversineKm(location, { lat: p.lat, lng: p.lng });
     if (distKm > maxDist) continue;
 
     const serviceCost =
-      reqType === "seed" ? s.price_per_kg * kg_needed : s.price_per_acre * acres;
+      reqType === "seed"
+        ? (seedPrice ?? s.price_per_kg) * kg_needed
+        : s.price_per_acre * acres;
     const totalCost = serviceCost + distKm * rate;
     if (totalCost > maxCost) continue;
 
@@ -79,10 +94,11 @@ const scenarios = [
     },
   },
   {
-    name: "Seed, 20 kg (farmer at north-west corner R0C0)",
+    name: "Potato seed, 20 kg (farmer at north-west corner R0C0)",
     req: {
       location: db.nodes.R0C0,
       service_type: "seed",
+      seed_type: "potato",
       kg_needed: 20,
       max_distance_km: 10,
       max_total_cost_tk: 4000,

@@ -17,6 +17,10 @@
 const fs = require("fs");
 const path = require("path");
 
+const {
+  addSeedVarietiesToProvider,
+} = require("./lib/seed-varieties");
+
 // ---------------------------------------------------------------------------
 // Config - change these to target another region / spacing
 // ---------------------------------------------------------------------------
@@ -111,7 +115,7 @@ for (const [id, p] of Object.entries(db.providers || {})) {
     node,
     lat: Number(lat.toFixed(6)),
     lng: Number(lng.toFixed(6)),
-    services: p.services,
+    services: addSeedVarietiesToProvider(id, p.services),
   };
 
   features.push({
